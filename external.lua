@@ -57,10 +57,8 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
     
     AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/23/2026</b></font>", Content = "• Added Bulk Crate Opener and 'Use Max' Item features.\n• Optimized everything to be faster and smoother.\n• Fixed Rune hitboxes overlapping when switching."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/22/2026</b></font>", Content = "• Added One-Click 'Unlock Every Feature' Button\n• Fully Optimized Pad & Runes Utilities\n• Merged Resets into Custom Multi-Dropdown\n• Removed Anti-AFK (Redundant) & Reorganized Tabs"})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/21/2026</b></font>", Content = "• CRITICAL: Fixed UI Theme Crash and integrated 8-Theme engine using native profiles\n• Auto Upgrade Multi-Select Dropdown Restored\n• Added Rarity Anywhere\n• Added Auto Clicker & Increased Speed Precision"})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/20/2026</b></font>", Content = "• Fixed FPS lag checks breaking Auto Rollers\n• Built strict Memory Cleanup for seamless re-execution\n• Added built-in Custom Theme Picker\n• Instant Requirement Checks for Overroll/Rebirth/Tiers"})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/21/2026 - 5/24/2026</b></font>", Content = "• Multi-select added to 'Use Max' items with safe usage cooldowns.\n• Complete rewrite of Rune/Rarity teleportation logic to fix 'stuck' pads.\n• Added one-click UI frame disabler for extreme FPS boosting.\n• Spacing and layout improvements across Main tab."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Older Updates</b></font>", Content = "• One-Click 'Unlock Every Feature' Button added.\n• Merged Resets into Custom Multi-Dropdown.\n• Fixed UI Theme Crash and integrated 8-Theme engine.\n• Fixed FPS lag checks breaking Auto Rollers."})
 
     -- [MAIN TAB]
     MainTab:CreateSection("Exploits")
@@ -81,8 +79,30 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
             end)
         end
     })
+    
+    MainTab:CreateButton({
+        Name = "Disable Rolling Frame (Boost FPS by A LOT)",
+        Callback = function()
+            task.spawn(function()
+                while _G.DiceSession == currentSession do
+                    local playerScripts = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerScripts")
+                    local rollingScript = playerScripts and playerScripts:FindFirstChild("Rolling")
+                    if rollingScript and rollingScript.Disabled then
+                        rollingScript.Disabled = false 
+                    end
+                    
+                    local rollingFrame = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Frames") and game:GetService("Players").LocalPlayer.PlayerGui.Frames:FindFirstChild("Rolling")
+                    if rollingFrame then
+                        rollingFrame:Destroy()
+                    end
+                    task.wait(0.1)
+                end
+            end)
+            Rayfield:Notify({Title = "FPS Boosted", Content = "Rolling Frame auto-deleter is now active.", Duration = 3})
+        end
+    })
 
-    MainTab:CreateSection("Inventory Utilities")
+    MainTab:CreateSection("Crate Opener")
     local crateList = {}
     local useItemList = {}
     pcall(function()
@@ -102,7 +122,7 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     
     _G.SelectedCrate = crateList[1]
     _G.CrateAmount = 1
-    _G.SelectedUseItem = useItemList[1]
+    _G.SelectedUseItems = {useItemList[1]}
     
     MainTab:CreateDropdown({Name = "Select Crate Type", Options = crateList, CurrentOption = {crateList[1]}, MultipleOptions = false, Callback = function(O) if O and O[1] then _G.SelectedCrate = O[1] end end})
     MainTab:CreateInput({Name = "Amount to Open", PlaceholderText = "Enter amount (e.g. 100)", RemoveTextAfterFocusLost = false, Callback = function(T) local num = tonumber(T); if num and num > 0 then _G.CrateAmount = math.floor(num) end end})
@@ -115,15 +135,23 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
         else Rayfield:Notify({Title = "Error", Content = "Invalid amount or crate type.", Duration = 3}) end
     end})
 
-    MainTab:CreateDropdown({Name = "Select Item to Use Max", Options = useItemList, CurrentOption = {useItemList[1]}, MultipleOptions = false, Callback = function(O) if O and O[1] then _G.SelectedUseItem = O[1] end end})
-    MainTab:CreateButton({Name = "Use Max Selected Item", Callback = function()
-        if _G.SelectedUseItem and _G.SelectedUseItem ~= "None" then
-            pcall(function()
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseItem"):FireServer(_G.SelectedUseItem, true)
-                Rayfield:Notify({Title = "Item Used", Content = "Used max " .. _G.SelectedUseItem, Duration = 3})
+    MainTab:CreateSection("Item Utilities")
+    local Dropdown_UseItems = MainTab:CreateDropdown({Name = "Select Item(s) to Use Max", Options = useItemList, CurrentOption = _G.SelectedUseItems, MultipleOptions = true, Callback = function(O) _G.SelectedUseItems = O end})
+    MainTab:CreateButton({Name = "Use Max Selected Item(s)", Callback = function()
+        if _G.SelectedUseItems and #_G.SelectedUseItems > 0 and _G.SelectedUseItems[1] ~= "None" then
+            task.spawn(function()
+                for _, itemName in ipairs(_G.SelectedUseItems) do
+                    if itemName ~= "None" then
+                        pcall(function()
+                            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseItem"):FireServer(itemName, true)
+                        end)
+                        task.wait(0.15) -- Cooldown so it doesn't look suspicious
+                    end
+                end
+                Rayfield:Notify({Title = "Items Used", Content = "Successfully used max for selected items.", Duration = 3})
             end)
         else 
-            Rayfield:Notify({Title = "Error", Content = "No valid item selected.", Duration = 3}) 
+            Rayfield:Notify({Title = "Error", Content = "No valid items selected.", Duration = 3}) 
         end
     end})
 
@@ -204,8 +232,8 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     local configListDropdown = ConfigTab:CreateDropdown({Name = "Config list", Options = {"Config"}, CurrentOption = {"Config"}, MultipleOptions = false, Callback = function(O) if O and O[1] then selectedConfigProfile = O[1] end end})
     local function refreshList() local p = {}; pcall(function() if listfiles then for _, f in pairs(listfiles("Dice Rolling Incremental")) do local n = f:match("([^/\\]+)%.json$"); if n then table.insert(p, n) end end end end); if #p == 0 then table.insert(p, "Config") end; configListDropdown:Refresh(p, true) end
     
-    local function saveUniversal(n) if not writefile then return end; pcall(function() local d = {SafeRoll=_G.SafeRollActive, FastRoll=_G.FastRollActive, AutoClick=_G.AutoClickActive, Glyph=_G.GlyphRollActive, AutoMastery=_G.AutoMasteryActive, Rune=_G.RuneActive, Rarity=_G.RarityActive, RuneType=_G.SelectedRuneName, WSMod=_G.WSModifier, WSVal=_G.WSValue, JPMod=_G.JPModifier, JPVal=_G.JPValue, FPS=_G.FPSBoostActive, StreamerMode=_G.StreamerMode, AutoAllUpgrades=_G.AutoAllUpgrades, AutoResets=_G.AutoResetsActive, ResetsList=_G.AutoResetsList, AutoUT=_G.AutoUT, AutoUpgrades=_G.AutoUpgradesList, BgR=_G.RenderingColor.R, BgG=_G.RenderingColor.G, BgB=_G.RenderingColor.B}; writefile("Dice Rolling Incremental/" .. n .. ".json", game:GetService("HttpService"):JSONEncode(d)) end) end
-    local function loadUniversal(n) if not readfile or not isfile then return end; pcall(function() local p = "Dice Rolling Incremental/" .. n .. ".json"; if isfile(p) then local d = game:GetService("HttpService"):JSONDecode(readfile(p)); if d.SafeRoll and d.FastRoll then d.FastRoll = false end; if d.SafeRoll ~= nil then _G.SafeRollActive = d.SafeRoll; Toggle_SafeRoll:Set(d.SafeRoll) end; if d.FastRoll ~= nil then _G.FastRollActive = d.FastRoll; Toggle_FastRoll:Set(d.FastRoll) end; if d.AutoClick ~= nil then _G.AutoClickActive = d.AutoClick; Toggle_AutoClick:Set(d.AutoClick) end; if d.Glyph ~= nil then _G.GlyphRollActive = d.Glyph; Toggle_Glyph:Set(d.Glyph) end; if d.AutoMastery ~= nil then _G.AutoMasteryActive = d.AutoMastery; Toggle_Mastery:Set(d.AutoMastery) end; if d.Rune ~= nil then _G.RuneActive = d.Rune; Toggle_Rune:Set(d.Rune) end; if d.Rarity ~= nil then _G.RarityActive = d.Rarity; Toggle_Rarity:Set(d.Rarity) end; if d.RuneType ~= nil then _G.SelectedRuneName = d.RuneType; Dropdown_Rune:Set({d.RuneType}) end; if d.WSMod ~= nil then _G.WSModifier = d.WSMod; Toggle_Walkspeed:Set(d.WSMod) end; if d.WSVal ~= nil then _G.WSValue = d.WSVal; Slider_Walkspeed:Set(d.WSVal) end; if d.JPMod ~= nil then _G.JPModifier = d.JPMod; Toggle_JumpPower:Set(d.JPMod) end; if d.JPVal ~= nil then _G.JPValue = d.JPVal; Slider_JumpPower:Set(d.JPVal) end; if d.StreamerMode ~= nil then _G.StreamerMode = d.StreamerMode; Toggle_Streamer:Set(d.StreamerMode) end; if d.AutoAllUpgrades ~= nil then _G.AutoAllUpgrades = d.AutoAllUpgrades; Toggle_AllUpgrades:Set(d.AutoAllUpgrades) end; if d.FPS ~= nil then _G.FPSBoostActive = d.FPS; Toggle_FPS:Set(d.FPS); pcall(function() game:GetService("RunService"):Set3dRenderingEnabled(not d.FPS) end) end; if d.AutoResets ~= nil then _G.AutoResetsActive = d.AutoResets; Toggle_Resets:Set(d.AutoResets) end; if d.ResetsList ~= nil then _G.AutoResetsList = d.ResetsList; Dropdown_Resets:Set(d.ResetsList) end; if d.AutoUT ~= nil then _G.AutoUT = d.AutoUT; Toggle_UT:Set(d.AutoUT) end; if d.AutoUpgrades ~= nil then _G.AutoUpgradesList = d.AutoUpgrades; Dropdown_Upgrades:Set(d.AutoUpgrades) end; if d.BgR ~= nil and d.BgG ~= nil and d.BgB ~= nil then _G.RenderingColor = Color3.new(d.BgR, d.BgG, d.BgB) end end end) end
+    local function saveUniversal(n) if not writefile then return end; pcall(function() local d = {SafeRoll=_G.SafeRollActive, FastRoll=_G.FastRollActive, AutoClick=_G.AutoClickActive, Glyph=_G.GlyphRollActive, AutoMastery=_G.AutoMasteryActive, Rune=_G.RuneActive, Rarity=_G.RarityActive, RuneType=_G.SelectedRuneName, UseItemsList=_G.SelectedUseItems, WSMod=_G.WSModifier, WSVal=_G.WSValue, JPMod=_G.JPModifier, JPVal=_G.JPValue, FPS=_G.FPSBoostActive, StreamerMode=_G.StreamerMode, AutoAllUpgrades=_G.AutoAllUpgrades, AutoResets=_G.AutoResetsActive, ResetsList=_G.AutoResetsList, AutoUT=_G.AutoUT, AutoUpgrades=_G.AutoUpgradesList, BgR=_G.RenderingColor.R, BgG=_G.RenderingColor.G, BgB=_G.RenderingColor.B}; writefile("Dice Rolling Incremental/" .. n .. ".json", game:GetService("HttpService"):JSONEncode(d)) end) end
+    local function loadUniversal(n) if not readfile or not isfile then return end; pcall(function() local p = "Dice Rolling Incremental/" .. n .. ".json"; if isfile(p) then local d = game:GetService("HttpService"):JSONDecode(readfile(p)); if d.SafeRoll and d.FastRoll then d.FastRoll = false end; if d.SafeRoll ~= nil then _G.SafeRollActive = d.SafeRoll; Toggle_SafeRoll:Set(d.SafeRoll) end; if d.FastRoll ~= nil then _G.FastRollActive = d.FastRoll; Toggle_FastRoll:Set(d.FastRoll) end; if d.AutoClick ~= nil then _G.AutoClickActive = d.AutoClick; Toggle_AutoClick:Set(d.AutoClick) end; if d.Glyph ~= nil then _G.GlyphRollActive = d.Glyph; Toggle_Glyph:Set(d.Glyph) end; if d.AutoMastery ~= nil then _G.AutoMasteryActive = d.AutoMastery; Toggle_Mastery:Set(d.AutoMastery) end; if d.Rune ~= nil then _G.RuneActive = d.Rune; Toggle_Rune:Set(d.Rune) end; if d.Rarity ~= nil then _G.RarityActive = d.Rarity; Toggle_Rarity:Set(d.Rarity) end; if d.RuneType ~= nil then _G.SelectedRuneName = d.RuneType; Dropdown_Rune:Set({d.RuneType}) end; if d.UseItemsList ~= nil then _G.SelectedUseItems = d.UseItemsList; Dropdown_UseItems:Set(d.UseItemsList) end; if d.WSMod ~= nil then _G.WSModifier = d.WSMod; Toggle_Walkspeed:Set(d.WSMod) end; if d.WSVal ~= nil then _G.WSValue = d.WSVal; Slider_Walkspeed:Set(d.WSVal) end; if d.JPMod ~= nil then _G.JPModifier = d.JPMod; Toggle_JumpPower:Set(d.JPMod) end; if d.JPVal ~= nil then _G.JPValue = d.JPVal; Slider_JumpPower:Set(d.JPVal) end; if d.StreamerMode ~= nil then _G.StreamerMode = d.StreamerMode; Toggle_Streamer:Set(d.StreamerMode) end; if d.AutoAllUpgrades ~= nil then _G.AutoAllUpgrades = d.AutoAllUpgrades; Toggle_AllUpgrades:Set(d.AutoAllUpgrades) end; if d.FPS ~= nil then _G.FPSBoostActive = d.FPS; Toggle_FPS:Set(d.FPS); pcall(function() game:GetService("RunService"):Set3dRenderingEnabled(not d.FPS) end) end; if d.AutoResets ~= nil then _G.AutoResetsActive = d.AutoResets; Toggle_Resets:Set(d.AutoResets) end; if d.ResetsList ~= nil then _G.AutoResetsList = d.ResetsList; Dropdown_Resets:Set(d.ResetsList) end; if d.AutoUT ~= nil then _G.AutoUT = d.AutoUT; Toggle_UT:Set(d.AutoUT) end; if d.AutoUpgrades ~= nil then _G.AutoUpgradesList = d.AutoUpgrades; Dropdown_Upgrades:Set(d.AutoUpgrades) end; if d.BgR ~= nil and d.BgG ~= nil and d.BgB ~= nil then _G.RenderingColor = Color3.new(d.BgR, d.BgG, d.BgB) end end end) end
     
     ConfigTab:CreateButton({Name = "Create config", Callback = function() if typedConfigName ~= "" then saveUniversal(typedConfigName); task.wait(math.random(150, 250) / 1000); refreshList(); Rayfield:Notify({Title = "Config", Content = "Created: " .. typedConfigName, Duration = 2}) end end})
     ConfigTab:CreateButton({Name = "Load config", Callback = function() local t = (selectedConfigProfile ~= "Config") and selectedConfigProfile or typedConfigName; loadUniversal(t); Rayfield:Notify({Title = "Config", Content = "Loaded: " .. t, Duration = 2}) end})
