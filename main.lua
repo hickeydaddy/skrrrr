@@ -294,25 +294,13 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO RUNE ANYWHERE LOOP ]
     -- ------------------------------------------
     local lastSelectedRuneName = _G.SelectedRuneName
-    local lastRuneState = _G.RuneActive
-    local forceRuneGrace = 0
-
     task.spawn(function()
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
             
-            -- Detect Toggle State Change
-            if lastRuneState ~= _G.RuneActive then
-                if hrp then
-                    lastRuneState = _G.RuneActive
-                    forceRuneGrace = 5 
-                end
-            end
-            
             -- Handle Rune Switching (Fierce Cleanup)
             if lastSelectedRuneName ~= _G.SelectedRuneName then
                 local rf = workspace:FindFirstChild("Runes")
-                -- CRITICAL FIX: Only update memory if HRP exists and cleanup actually happens
                 if rf and hrp then
                     for _, child in ipairs(rf:GetChildren()) do
                         if child.Name ~= _G.SelectedRuneName then
@@ -324,30 +312,22 @@ local function BootMainScript(isVersionSafe)
                         end
                     end
                     lastSelectedRuneName = _G.SelectedRuneName
-                    forceRuneGrace = 5
                     task.wait(0.15) -- Yield so the server registers the old pad going away
                 end
             end
 
-            -- Adaptive Velocity Check + Grace Period Override
+            -- Continuous Teleport (No Velocity Check)
             if _G.RuneActive and hrp then
                 local hb = getRuneHitbox(_G.SelectedRuneName)
                 if hb then
-                    if hrp.Velocity.Magnitude > 0.5 or forceRuneGrace > 0 then
-                        hb.CFrame = hrp.CFrame
-                        if firetouchinterest then 
-                            firetouchinterest(hb, hrp, 0)
-                            task.wait(math.random(40, 50) / 1000) 
-                            firetouchinterest(hb, hrp, 1) 
-                        else 
-                            task.wait(math.random(40, 50) / 1000)
-                            hb.CFrame = _G.HiddenCFrame 
-                        end
-                        if forceRuneGrace > 0 then forceRuneGrace = forceRuneGrace - 1 end
-                    else
-                        -- Idle State: Hitbox remains snapped to feet so it doesn't get lost
-                        hb.CFrame = hrp.CFrame
-                        task.wait(0.2)
+                    hb.CFrame = hrp.CFrame
+                    if firetouchinterest then 
+                        firetouchinterest(hb, hrp, 0)
+                        task.wait(math.random(40, 50) / 1000) 
+                        firetouchinterest(hb, hrp, 1) 
+                    else 
+                        task.wait(math.random(40, 50) / 1000)
+                        hb.CFrame = _G.HiddenCFrame 
                     end
                 else
                     task.wait(0.2)
@@ -367,48 +347,22 @@ local function BootMainScript(isVersionSafe)
     -- ------------------------------------------
     -- [ RARITY ANYWHERE LOOP ]
     -- ------------------------------------------
-    local lastRarityState = _G.RarityActive
-    local forceRarityGrace = 0
-
     task.spawn(function()
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
-            
-            -- Detect Toggle State Change
-            if lastRarityState ~= _G.RarityActive then
-                if hrp then
-                    lastRarityState = _G.RarityActive
-                    forceRarityGrace = 5 
-                    
-                    if not _G.RarityActive then
-                        local hb = getRarityHitbox()
-                        if hb then
-                            hb.CFrame = _G.HiddenCFrame
-                            if firetouchinterest then firetouchinterest(hb, hrp, 1) end
-                        end
-                    end
-                end
-            end
 
-            -- Adaptive Velocity Check + Grace Period Override
+            -- Continuous Teleport (No Velocity Check)
             if _G.RarityActive and hrp then 
                 local hb = getRarityHitbox()
                 if hb then
-                    if hrp.Velocity.Magnitude > 0.5 or forceRarityGrace > 0 then
-                        hb.CFrame = hrp.CFrame
-                        if firetouchinterest then 
-                            firetouchinterest(hb, hrp, 0)
-                            task.wait(math.random(40, 50) / 1000) 
-                            firetouchinterest(hb, hrp, 1) 
-                        else 
-                            task.wait(math.random(40, 50) / 1000)
-                            hb.CFrame = _G.HiddenCFrame 
-                        end
-                        if forceRarityGrace > 0 then forceRarityGrace = forceRarityGrace - 1 end
-                    else
-                        -- Idle State: Keep snapped to feet
-                        hb.CFrame = hrp.CFrame
-                        task.wait(0.2)
+                    hb.CFrame = hrp.CFrame
+                    if firetouchinterest then 
+                        firetouchinterest(hb, hrp, 0)
+                        task.wait(math.random(40, 50) / 1000) 
+                        firetouchinterest(hb, hrp, 1) 
+                    else 
+                        task.wait(math.random(40, 50) / 1000)
+                        hb.CFrame = _G.HiddenCFrame 
                     end
                 else
                     task.wait(0.2)
