@@ -303,27 +303,30 @@ local function BootMainScript(isVersionSafe)
             
             -- Detect Toggle State Change
             if lastRuneState ~= _G.RuneActive then
-                lastRuneState = _G.RuneActive
-                forceRuneGrace = 5 -- Force aggressive update for next 5 loops
+                if hrp then
+                    lastRuneState = _G.RuneActive
+                    forceRuneGrace = 5 
+                end
             end
             
-            -- Handle Rune Switching (Aggressive Cleanup)
+            -- Handle Rune Switching (Fierce Cleanup)
             if lastSelectedRuneName ~= _G.SelectedRuneName then
                 local rf = workspace:FindFirstChild("Runes")
+                -- CRITICAL FIX: Only update memory if HRP exists and cleanup actually happens
                 if rf and hrp then
                     for _, child in ipairs(rf:GetChildren()) do
                         if child.Name ~= _G.SelectedRuneName then
                             local h = child:FindFirstChild("Hitbox")
                             if h then
-                                -- Tell the server we explicitly stopped touching the old runes
-                                if firetouchinterest then firetouchinterest(h, hrp, 1) end
                                 h.CFrame = _G.HiddenCFrame
+                                if firetouchinterest then firetouchinterest(h, hrp, 1) end
                             end
                         end
                     end
+                    lastSelectedRuneName = _G.SelectedRuneName
+                    forceRuneGrace = 5
+                    task.wait(0.15) -- Yield so the server registers the old pad going away
                 end
-                lastSelectedRuneName = _G.SelectedRuneName
-                forceRuneGrace = 5
             end
 
             -- Adaptive Velocity Check + Grace Period Override
@@ -343,7 +346,6 @@ local function BootMainScript(isVersionSafe)
                         if forceRuneGrace > 0 then forceRuneGrace = forceRuneGrace - 1 end
                     else
                         -- Idle State: Hitbox remains snapped to feet so it doesn't get lost
-                        -- Server natively handles your physical presence without spamming firetouch
                         hb.CFrame = hrp.CFrame
                         task.wait(0.2)
                     end
@@ -354,8 +356,8 @@ local function BootMainScript(isVersionSafe)
                 -- Not active: Ensure active hitbox is fully cleared from player
                 local hb = getRuneHitbox(_G.SelectedRuneName)
                 if hb and hb.CFrame ~= _G.HiddenCFrame then 
-                    if hrp and firetouchinterest then firetouchinterest(hb, hrp, 1) end
                     hb.CFrame = _G.HiddenCFrame 
+                    if hrp and firetouchinterest then firetouchinterest(hb, hrp, 1) end
                 end
                 task.wait(0.5) 
             end 
@@ -374,8 +376,18 @@ local function BootMainScript(isVersionSafe)
             
             -- Detect Toggle State Change
             if lastRarityState ~= _G.RarityActive then
-                lastRarityState = _G.RarityActive
-                forceRarityGrace = 5 -- Force aggressive update for next 5 loops
+                if hrp then
+                    lastRarityState = _G.RarityActive
+                    forceRarityGrace = 5 
+                    
+                    if not _G.RarityActive then
+                        local hb = getRarityHitbox()
+                        if hb then
+                            hb.CFrame = _G.HiddenCFrame
+                            if firetouchinterest then firetouchinterest(hb, hrp, 1) end
+                        end
+                    end
+                end
             end
 
             -- Adaptive Velocity Check + Grace Period Override
@@ -405,8 +417,8 @@ local function BootMainScript(isVersionSafe)
                 -- Not active: Ensure hitbox is hidden
                 local hb = getRarityHitbox()
                 if hb and hb.CFrame ~= _G.HiddenCFrame then 
-                    if hrp and firetouchinterest then firetouchinterest(hb, hrp, 1) end
                     hb.CFrame = _G.HiddenCFrame 
+                    if hrp and firetouchinterest then firetouchinterest(hb, hrp, 1) end
                 end
                 task.wait(0.5) 
             end 
