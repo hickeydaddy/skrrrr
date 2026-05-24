@@ -57,7 +57,7 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
     
     AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/24/2026</b></font>", Content = "• Multi-select 'Use Max' now ignores Chests/Crates/Quest Rerolls.\n• Rolling Frame Disabler is now a priority toggle (Autoload supported!).\n• Complete rewrite of Rune/Rarity teleportation logic to fix 'stuck' pads."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/24/2026</b></font>", Content = "• Multi-select 'Use Max' now securely ignores Chests, Crates, and Quest Rerolls.\n• Rolling Frame Disabler is now a priority toggle (Autoload supported!).\n• Massive logic rewrite of Rune/Rarity teleportation to fix permanently 'stuck' pads."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/23/2026</b></font>", Content = "• Added Bulk Crate Opener and 'Use Max' Item features.\n• Optimized everything to be faster and smoother.\n• Fixed Rune hitboxes overlapping when switching."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/22/2026</b></font>", Content = "• Added One-Click 'Unlock Every Feature' Button\n• Fully Optimized Pad & Runes Utilities\n• Merged Resets into Custom Multi-Dropdown\n• Removed Anti-AFK (Redundant) & Reorganized Tabs"})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/21/2026</b></font>", Content = "• CRITICAL: Fixed UI Theme Crash and integrated 8-Theme engine using native profiles\n• Auto Upgrade Multi-Select Dropdown Restored\n• Added Rarity Anywhere\n• Added Auto Clicker & Increased Speed Precision"})
@@ -92,10 +92,11 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
         local itemsFolder = me:FindFirstChild("Data") and me.Data:FindFirstChild("Items")
         if itemsFolder then
             for _, item in ipairs(itemsFolder:GetChildren()) do
-                if string.match(item.Name, "Crate") then 
-                    table.insert(crateList, item.Name) 
-                elseif not string.match(item.Name, "Chest") and not string.match(item.Name, "Quest Reroll") then
-                    table.insert(useItemList, item.Name)
+                local name = item.Name
+                if string.match(name, "Crate") then 
+                    table.insert(crateList, name) 
+                elseif not string.match(name, "Chest") and not string.match(name, "Quest Reroll") then
+                    table.insert(useItemList, name)
                 end
             end
         end
