@@ -39,7 +39,14 @@ end
 _G.DiceConnections = {}
 local function AddConn(conn) table.insert(_G.DiceConnections, conn) end
 
-_G.SafeRollActive, _G.FastRollActive, _G.GlyphRollActive, _G.RuneActive, _G.AutoMasteryActive, _G.AutoAllUpgrades = false, false, false, false, false, false
+-- Roll States
+_G.SafeRollActive, _G.FastRollActive = false, false
+_G.SafeYatzyRollActive, _G.FastYatzyRollActive = false, false
+_G.SafeCoinFlipActive, _G.FastCoinFlipActive = false, false
+_G.GlyphRollActive = false
+
+-- Utility States
+_G.RuneActive, _G.AutoMasteryActive, _G.AutoAllUpgrades = false, false, false
 _G.AutoClickActive, _G.RarityActive = false, false
 _G.AutoUpgradesList = {"Coins"} 
 _G.AutoResetsActive = false
@@ -48,7 +55,13 @@ _G.FPSBoostActive, _G.WSModifier, _G.WSValue, _G.JPModifier, _G.JPValue = false,
 _G.StreamerMode, _G.StreamerName, _G.StreamerColor = false, "HiddenUser", Color3.fromRGB(255, 255, 255)
 _G.AutoUT = false
 _G.RenderingColor = Color3.fromRGB(0, 0, 0)
+
+-- Network Locks
 _G.NetworkLock = false
+_G.YatzyNetworkLock = false
+_G.CoinFlipNetworkLock = false
+
+-- Selections
 _G.HiddenCFrame = CFrame.new(0, 5000, 0)
 _G.SelectedRuneName = "Basic"
 _G.SelectedCrate = "Basic Crate"
@@ -109,14 +122,13 @@ local function BootMainScript(isVersionSafe)
     end)
     
     -- ------------------------------------------
-    -- [ AUTO ROLL LOOPS (Safe & Fast) ]
+    -- [ STANDARD AUTO ROLL LOOPS (Safe & Fast) ]
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local rollRemote = remotes:WaitForChild("Roll", 9e9)
-        local lastSafeFire = 0
-        local lastFastFire = 0
+        local lastSafeFire, lastFastFire = 0, 0
         local conn
         conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
@@ -124,10 +136,58 @@ local function BootMainScript(isVersionSafe)
             local now = os.clock()
             if _G.SafeRollActive and not _G.FastRollActive then
                 local safeSpeed = 1 / (math.random(4460, 4610) / 1000)
-                if now - lastSafeFire >= safeSpeed then rollRemote:FireServer(); lastSafeFire = now end
+                if now - lastSafeFire >= safeSpeed then pcall(function() rollRemote:FireServer() end); lastSafeFire = now end
             elseif _G.FastRollActive and not _G.SafeRollActive then
                 local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
-                if now - lastFastFire >= fastSpeed then rollRemote:FireServer(); lastFastFire = now end
+                if now - lastFastFire >= fastSpeed then pcall(function() rollRemote:FireServer() end); lastFastFire = now end
+            end
+        end)
+        AddConn(conn)
+    end)
+
+    -- ------------------------------------------
+    -- [ YATZY AUTO ROLL LOOPS (Safe & Fast) ]
+    -- ------------------------------------------
+    task.spawn(function()
+        local rep = game:GetService("ReplicatedStorage")
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local rollRemote = remotes:WaitForChild("YatzyRoll", 9e9)
+        local lastSafeFire, lastFastFire = 0, 0
+        local conn
+        conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+            if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
+            if _G.YatzyNetworkLock then return end
+            local now = os.clock()
+            if _G.SafeYatzyRollActive and not _G.FastYatzyRollActive then
+                local safeSpeed = 1 / (math.random(4460, 4610) / 1000)
+                if now - lastSafeFire >= safeSpeed then pcall(function() rollRemote:FireServer() end); lastSafeFire = now end
+            elseif _G.FastYatzyRollActive and not _G.SafeYatzyRollActive then
+                local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
+                if now - lastFastFire >= fastSpeed then pcall(function() rollRemote:FireServer() end); lastFastFire = now end
+            end
+        end)
+        AddConn(conn)
+    end)
+
+    -- ------------------------------------------
+    -- [ COIN FLIP AUTO ROLL LOOPS (Safe & Fast) ]
+    -- ------------------------------------------
+    task.spawn(function()
+        local rep = game:GetService("ReplicatedStorage")
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local rollRemote = remotes:WaitForChild("CoinFlip", 9e9)
+        local lastSafeFire, lastFastFire = 0, 0
+        local conn
+        conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+            if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
+            if _G.CoinFlipNetworkLock then return end
+            local now = os.clock()
+            if _G.SafeCoinFlipActive and not _G.FastCoinFlipActive then
+                local safeSpeed = 1 / (math.random(4460, 4610) / 1000)
+                if now - lastSafeFire >= safeSpeed then pcall(function() rollRemote:FireServer() end); lastSafeFire = now end
+            elseif _G.FastCoinFlipActive and not _G.SafeCoinFlipActive then
+                local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
+                if now - lastFastFire >= fastSpeed then pcall(function() rollRemote:FireServer() end); lastFastFire = now end
             end
         end)
         AddConn(conn)
@@ -182,7 +242,7 @@ local function BootMainScript(isVersionSafe)
     end)
 
     -- ------------------------------------------
-    -- [ AUTO UPGRADES LOOP (Coins, PP, AP, etc.) ]
+    -- [ AUTO UPGRADES LOOP (Coins, PP, Cash, Silver, etc.) ]
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
@@ -195,7 +255,8 @@ local function BootMainScript(isVersionSafe)
             ["EnergyUpgrades"] = {ID = "Energy", Stat = "Energy"}, ["CrystalUpgrades"] = {ID = "Crystals", Stat = "Crystals"},
             ["ClicksUpgrades"] = {ID = "Clicks", Stat = "Clicks"}, ["JadeUpgrades"] = {ID = "Jade", Stat = "Jade"},
             ["EssenceUpgrades"] = {ID = "Essence", Stat = "Essence"}, ["RarityUpgrades"] = {ID = "Rarities", Stat = "Essence"},
-            ["CrownUpgrades"] = {ID = "Crowns", Stat = "Crowns"}
+            ["CrownUpgrades"] = {ID = "Crowns", Stat = "Crowns"},
+            ["CashUpgrades"] = {ID = "Cash", Stat = "Cash"}, ["FlipUpgrades"] = {ID = "Silver", Stat = "Silver"}
         }
         while _G.DiceSession == currentSession do
             task.wait(math.random(80, 100) / 1000) 
