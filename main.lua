@@ -40,9 +40,9 @@ _G.DiceConnections = {}
 local function AddConn(conn) table.insert(_G.DiceConnections, conn) end
 
 -- Roll States
-_G.SafeRollActive, _G.FastRollActive = false, false
-_G.SafeYatzyRollActive, _G.FastYatzyRollActive = false, false
-_G.SafeCoinFlipActive, _G.FastCoinFlipActive = false, false
+_G.FastRollActive = false
+_G.FastYatzyRollActive = false
+_G.FastCoinFlipActive = false
 _G.GlyphRollActive = false
 
 -- Utility States
@@ -55,11 +55,6 @@ _G.FPSBoostActive, _G.WSModifier, _G.WSValue, _G.JPModifier, _G.JPValue = false,
 _G.StreamerMode, _G.StreamerName, _G.StreamerColor = false, "HiddenUser", Color3.fromRGB(255, 255, 255)
 _G.AutoUT = false
 _G.RenderingColor = Color3.fromRGB(0, 0, 0)
-
--- Network Locks
-_G.NetworkLock = false
-_G.YatzyNetworkLock = false
-_G.CoinFlipNetworkLock = false
 
 -- Selections
 _G.HiddenCFrame = CFrame.new(0, 5000, 0)
@@ -108,14 +103,12 @@ local function BootMainScript(isVersionSafe)
             if _G.DisableRollingFrameActive then
                 local player = game:GetService("Players").LocalPlayer
                 
-                -- Re-enable the script if it was disabled to prevent game engine crashes
                 local playerScripts = player:FindFirstChild("PlayerScripts")
                 local rollingScript = playerScripts and playerScripts:FindFirstChild("Rolling")
                 if rollingScript and rollingScript.Disabled then
                     rollingScript.Disabled = false 
                 end
                 
-                -- Delete all 3 rolling frames
                 local playerGui = player:FindFirstChild("PlayerGui")
                 local frames = playerGui and playerGui:FindFirstChild("Frames")
                 
@@ -135,72 +128,69 @@ local function BootMainScript(isVersionSafe)
     end)
     
     -- ------------------------------------------
-    -- [ STANDARD AUTO ROLL LOOPS (Safe & Fast) ]
+    -- [ STANDARD FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local rollRemote = remotes:WaitForChild("Roll", 9e9)
-        local lastSafeFire, lastFastFire = 0, 0
+        local lastFastFire = 0
         local conn
         conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
-            if _G.NetworkLock then return end
-            local now = os.clock()
-            if _G.SafeRollActive and not _G.FastRollActive then
-                local safeSpeed = 1 / (math.random(4460, 4610) / 1000)
-                if now - lastSafeFire >= safeSpeed then pcall(function() rollRemote:FireServer() end); lastSafeFire = now end
-            elseif _G.FastRollActive and not _G.SafeRollActive then
+            if _G.FastRollActive then
+                local now = os.clock()
                 local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
-                if now - lastFastFire >= fastSpeed then pcall(function() rollRemote:FireServer() end); lastFastFire = now end
+                if now - lastFastFire >= fastSpeed then 
+                    pcall(function() rollRemote:FireServer() end)
+                    lastFastFire = now 
+                end
             end
         end)
         AddConn(conn)
     end)
 
     -- ------------------------------------------
-    -- [ YATZY AUTO ROLL LOOPS (Safe & Fast) ]
+    -- [ YATZY FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local rollRemote = remotes:WaitForChild("YatzyRoll", 9e9)
-        local lastSafeFire, lastFastFire = 0, 0
+        local lastFastFire = 0
         local conn
         conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
-            if _G.YatzyNetworkLock then return end
-            local now = os.clock()
-            if _G.SafeYatzyRollActive and not _G.FastYatzyRollActive then
-                local safeSpeed = 1 / (math.random(4460, 4610) / 1000)
-                if now - lastSafeFire >= safeSpeed then pcall(function() rollRemote:FireServer() end); lastSafeFire = now end
-            elseif _G.FastYatzyRollActive and not _G.SafeYatzyRollActive then
+            if _G.FastYatzyRollActive then
+                local now = os.clock()
                 local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
-                if now - lastFastFire >= fastSpeed then pcall(function() rollRemote:FireServer() end); lastFastFire = now end
+                if now - lastFastFire >= fastSpeed then 
+                    pcall(function() rollRemote:FireServer() end)
+                    lastFastFire = now 
+                end
             end
         end)
         AddConn(conn)
     end)
 
     -- ------------------------------------------
-    -- [ COIN FLIP AUTO ROLL LOOPS (Safe & Fast) ]
+    -- [ COIN FLIP FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local rollRemote = remotes:WaitForChild("CoinFlip", 9e9)
-        local lastSafeFire, lastFastFire = 0, 0
+        local lastFastFire = 0
         local conn
         conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
-            if _G.CoinFlipNetworkLock then return end
-            local now = os.clock()
-            if _G.SafeCoinFlipActive and not _G.FastCoinFlipActive then
-                local safeSpeed = 1 / (math.random(4460, 4610) / 1000)
-                if now - lastSafeFire >= safeSpeed then pcall(function() rollRemote:FireServer() end); lastSafeFire = now end
-            elseif _G.FastCoinFlipActive and not _G.SafeCoinFlipActive then
+            if _G.FastCoinFlipActive then
+                local now = os.clock()
                 local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
-                if now - lastFastFire >= fastSpeed then pcall(function() rollRemote:FireServer() end); lastFastFire = now end
+                if now - lastFastFire >= fastSpeed then 
+                    pcall(function() rollRemote:FireServer() end)
+                    lastFastFire = now 
+                end
             end
         end)
         AddConn(conn)
@@ -390,7 +380,7 @@ local function BootMainScript(isVersionSafe)
                 end
             end
 
-            -- Continuous Teleport (No Velocity Check)
+            -- Continuous Teleport
             if _G.RuneActive and hrp then
                 local hb = getRuneHitbox(_G.SelectedRuneName)
                 if hb then
@@ -425,7 +415,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
 
-            -- Continuous Teleport (No Velocity Check)
+            -- Continuous Teleport
             if _G.RarityActive and hrp then 
                 local hb = getRarityHitbox()
                 if hb then
