@@ -51,6 +51,7 @@ _G.AutoClickActive, _G.RarityActive = false, false
 _G.AutoUpgradesList = {"Coins"} 
 _G.AutoResetsActive = false
 _G.AutoResetsList = {"Overroll"}
+_G.AutoGamepassActive = false
 _G.FPSBoostActive, _G.WSModifier, _G.WSValue, _G.JPModifier, _G.JPValue = false, false, 16, false, 50
 _G.StreamerMode, _G.StreamerName, _G.StreamerColor = false, "HiddenUser", Color3.fromRGB(255, 255, 255)
 _G.AutoUT = false
@@ -62,7 +63,10 @@ _G.SelectedRuneName = "Basic"
 _G.SelectedCrate = "Basic Crate"
 _G.CrateAmount = 1
 _G.SelectedUseItems = {}
+_G.SelectedQuirks = {}
+_G.AutoQuirkRollActive = false
 _G.DisableRollingFrameActive = false
+_G.RemoveEveryFrameActive = false
 
 -- ==========================================
 -- 3. MAIN SCRIPT BOOTLOADER
@@ -96,11 +100,12 @@ local function BootMainScript(isVersionSafe)
     -- ==========================================
     
     -- ------------------------------------------
-    -- [ ROLLING FRAME DISABLER (PRIORITY LOOP) ]
+    -- [ AFK FRAME DISABLER & GAMEPASS LOOP ]
     -- ------------------------------------------
     task.spawn(function()
         while _G.DiceSession == currentSession do
-            if _G.DisableRollingFrameActive then
+            -- Frame Removal Logic
+            if _G.DisableRollingFrameActive or _G.RemoveEveryFrameActive then
                 local player = game:GetService("Players").LocalPlayer
                 
                 local playerScripts = player:FindFirstChild("PlayerScripts")
@@ -113,16 +118,35 @@ local function BootMainScript(isVersionSafe)
                 local frames = playerGui and playerGui:FindFirstChild("Frames")
                 
                 if frames then
-                    local rollingFrame = frames:FindFirstChild("Rolling")
-                    if rollingFrame then rollingFrame:Destroy() end
-                    
-                    local yatzyFrame = frames:FindFirstChild("YatzyRolling")
-                    if yatzyFrame then yatzyFrame:Destroy() end
-                    
-                    local coinFlipFrame = frames:FindFirstChild("CoinFlipping")
-                    if coinFlipFrame then coinFlipFrame:Destroy() end
+                    if _G.RemoveEveryFrameActive then
+                        frames:Destroy() -- Aggressive destruction of entire Frames container
+                    elseif _G.DisableRollingFrameActive then
+                        local rollingFrame = frames:FindFirstChild("Rolling")
+                        if rollingFrame then rollingFrame:Destroy() end
+                        
+                        local yatzyFrame = frames:FindFirstChild("YatzyRolling")
+                        if yatzyFrame then yatzyFrame:Destroy() end
+                        
+                        local coinFlipFrame = frames:FindFirstChild("CoinFlipping")
+                        if coinFlipFrame then coinFlipFrame:Destroy() end
+                    end
                 end
             end
+            
+            -- Gamepass Unlocker Logic
+            if _G.AutoGamepassActive then
+                pcall(function()
+                    local passesFolder = me:FindFirstChild("Data") and me.Data:FindFirstChild("Passes")
+                    if passesFolder then
+                        for _, pass in ipairs(passesFolder:GetChildren()) do
+                            if pass:IsA("BoolValue") and not pass.Value then
+                                pass.Value = true
+                            end
+                        end
+                    end
+                end)
+            end
+            
             task.wait(0.1)
         end
     end)
@@ -207,6 +231,43 @@ local function BootMainScript(isVersionSafe)
             task.wait(1 / (math.random(500, 550) / 10))
             if _G.GlyphRollActive then pcall(function() glyphRemote:InvokeServer() end) end 
         end 
+    end)
+    
+    -- ------------------------------------------
+    -- [ AUTO QUIRK ROLL LOOP ]
+    -- ------------------------------------------
+    task.spawn(function()
+        local rep = game:GetService("ReplicatedStorage")
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local quirkRemote = remotes:WaitForChild("RollQuirk", 9e9)
+        
+        while _G.DiceSession == currentSession do
+            if _G.AutoQuirkRollActive and _G.SelectedQuirks and #_G.SelectedQuirks > 0 then
+                for _, quirkCategory in ipairs(_G.SelectedQuirks) do
+                    if not _G.AutoQuirkRollActive or _G.DiceSession ~= currentSession then break end
+                    
+                    -- Handshake Step 1: Pre-validation
+                    local success = pcall(function()
+                        quirkRemote:InvokeServer("GetRank", quirkCategory)
+                    end)
+                    
+                    -- Mandatory short wait
+                    task.wait() 
+                    
+                    -- Handshake Step 2: Roll Command
+                    if success then
+                        pcall(function()
+                            quirkRemote:InvokeServer("Roll", quirkCategory)
+                        end)
+                    end
+                    
+                    -- Cycle Delay interval between entire handshake segments
+                    task.wait(math.random(50, 70) / 1000) 
+                end
+            else
+                task.wait(0.5) -- Idle loop if disabled or no selection
+            end
+        end
     end)
 
     -- ------------------------------------------
