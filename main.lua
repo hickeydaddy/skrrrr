@@ -106,15 +106,28 @@ local function BootMainScript(isVersionSafe)
     task.spawn(function()
         while _G.DiceSession == currentSession do
             if _G.DisableRollingFrameActive then
-                local playerScripts = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerScripts")
+                local player = game:GetService("Players").LocalPlayer
+                
+                -- Re-enable the script if it was disabled to prevent game engine crashes
+                local playerScripts = player:FindFirstChild("PlayerScripts")
                 local rollingScript = playerScripts and playerScripts:FindFirstChild("Rolling")
                 if rollingScript and rollingScript.Disabled then
                     rollingScript.Disabled = false 
                 end
                 
-                local rollingFrame = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Frames") and game:GetService("Players").LocalPlayer.PlayerGui.Frames:FindFirstChild("Rolling")
-                if rollingFrame then
-                    rollingFrame:Destroy()
+                -- Delete all 3 rolling frames
+                local playerGui = player:FindFirstChild("PlayerGui")
+                local frames = playerGui and playerGui:FindFirstChild("Frames")
+                
+                if frames then
+                    local rollingFrame = frames:FindFirstChild("Rolling")
+                    if rollingFrame then rollingFrame:Destroy() end
+                    
+                    local yatzyFrame = frames:FindFirstChild("YatzyRolling")
+                    if yatzyFrame then yatzyFrame:Destroy() end
+                    
+                    local coinFlipFrame = frames:FindFirstChild("CoinFlipping")
+                    if coinFlipFrame then coinFlipFrame:Destroy() end
                 end
             end
             task.wait(0.1)
