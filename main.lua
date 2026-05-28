@@ -237,7 +237,7 @@ local function BootMainScript(isVersionSafe)
                     end)
                     
                     -- Cycle Delay interval between entire handshake segments
-                    task.wait(math.random(50, 70) / 1000) 
+                    task.wait(math.random(30, 40) / 1000) 
                 end
             else
                 task.wait(0.5) -- Idle loop if disabled or no selection
