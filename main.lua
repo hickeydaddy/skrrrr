@@ -229,16 +229,10 @@ local function BootMainScript(isVersionSafe)
                 for _, quirkCategory in ipairs(_G.SelectedQuirks) do
                     if not _G.AutoQuirkRollActive or _G.DiceSession ~= currentSession then break end
                     
-                    -- Handshake Step 1: Pre-validation
+                    -- Synchronous Handshake: No task.wait() between these calls!
+                    -- This perfectly mirrors the game's native u104() execution flow.
                     pcall(function()
                         quirkRemote:InvokeServer("GetRank", quirkCategory)
-                    end)
-                    
-                    -- Mandatory short wait
-                    task.wait() 
-                    
-                    -- Handshake Step 2: Roll Command
-                    pcall(function()
                         quirkRemote:InvokeServer("Roll", quirkCategory)
                     end)
                     
