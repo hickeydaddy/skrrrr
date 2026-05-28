@@ -57,7 +57,8 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
     
     AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/27/2026</b></font>", Content = "• Synced Quirk Auto Roll precisely to native game timing (No artificial delay between checks).\n• Extreme AFK FPS boost integrated to bypass entire Frame rendering natively.\n• Refactored Item utilities to cleanly house both Items and Crates."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/28/2026</b></font>", Content = "• Synced Quirk Auto Roll precisely to native game timing (No artificial delay between checks).\n• Extreme AFK FPS boost integrated to bypass entire Frame rendering natively.\n• Refactored Item utilities to cleanly house both Items and Crates."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/27/2026</b></font>", Content = "• Added Fast Yatsy Auto Roll.\n• Added Fast Auto Coin Flip.\n• Added Auto Quirk (Multiple choice)."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/24/2026</b></font>", Content = "• Multi-select 'Use Max' now securely ignores Chests, Crates, and Quest Rerolls.\n• Rolling Frame Disabler is now a priority toggle (Autoload supported!).\n• Reverted Runes back to continuous loop teleportation to fully eliminate stuck pads."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/23/2026</b></font>", Content = "• Added Bulk Crate Opener and 'Use Max' Item features.\n• Optimized everything to be faster and smoother.\n• Fixed Rune hitboxes overlapping when switching."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/22/2026</b></font>", Content = "• Added One-Click 'Unlock Every Feature' Button\n• Fully Optimized Pad & Runes Utilities\n• Merged Resets into Custom Multi-Dropdown\n• Removed Anti-AFK (Redundant) & Reorganized Tabs"})
@@ -193,7 +194,7 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     local Toggle_Streamer = MiscTab:CreateToggle({Name = "Enable Streamer Mode", CurrentValue = false, Callback = function(V) _G.StreamerMode = V; if not V and me.Character then pcall(function() local nametag = me.Character:FindFirstChild("OverheadGUI") and me.Character.OverheadGUI:FindFirstChild("Nametag"); if nametag then if nametag:FindFirstChild("Title") then nametag.Title.Text = me.DisplayName; nametag.Title.TextColor3 = Color3.fromRGB(255,255,255) end; if nametag:FindFirstChild("Shadow") then nametag.Shadow.Text = me.DisplayName end end end) end end})
 
     MiscTab:CreateSection("System")
-    local Toggle_FPS = MiscTab:CreateToggle({Name = "Disable 3dRendering (Huge FPS Boost)", CurrentValue = false, Callback = function(V) _G.FPSBoostActive = V; pcall(function() game:GetService("RunService"):Set3dRenderingEnabled(not V) end) end})
+    local Toggle_FPS = MiscTab:CreateToggle({Name = "Disable 3dRendering (FPS Boost)", CurrentValue = false, Callback = function(V) _G.FPSBoostActive = V; pcall(function() game:GetService("RunService"):Set3dRenderingEnabled(not V) end) end})
     MiscTab:CreateColorPicker({Name = "3D Rendering BG Color", Color = Color3.fromRGB(0,0,0), Callback = function(V) _G.RenderingColor = V end})
 
     MiscTab:CreateSection("Player Modifiers")
