@@ -85,7 +85,7 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     
     MainTab:CreateParagraph({Title = "⚠️ FPS Booster Note", Content = "Restart Required: You might need to rejoin after enabling/disabling the Frame Disablers for them to work properly. Save this in your autoload!"})
     local Toggle_RollingFrame = MainTab:CreateToggle({Name = "Disable ALL Rolling Frames (Boost FPS by A LOT)", CurrentValue = false, Callback = function(V) _G.DisableRollingFrameActive = V end})
-    local Toggle_RemoveFrames = MainTab:CreateToggle({Name = "Remove every frame (For AFK FPS Boost)", CurrentValue = false, Callback = function(V) _G.RemoveEveryFrameActive = V end})
+    local Toggle_RemoveFrames = MainTab:CreateToggle({Name = "Remove every frame (For AFK users)", CurrentValue = false, Callback = function(V) _G.RemoveEveryFrameActive = V end})
 
     MainTab:CreateSection("Item Utilities")
     local crateList = {}
