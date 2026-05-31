@@ -520,8 +520,10 @@ end
 -- 5. VERSION SAFETY GATE CHECK
 -- ==========================================
 local currentVersion = game.PlaceVersion
-if currentVersion == SAFE_PLACE_VERSION then 
-    BootMainScript(true) 
+
+-- If the user sets _G.VersionCheck = false, bypass the warning GUI
+if currentVersion == SAFE_PLACE_VERSION or _G.VersionCheck == false then 
+    BootMainScript(currentVersion == SAFE_PLACE_VERSION) 
 else
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
     ExternalModule.BuildVersionGate(Rayfield, SAFE_PLACE_VERSION, currentVersion, BootMainScript, me, sendRequest)
