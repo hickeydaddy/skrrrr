@@ -45,7 +45,6 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     local AboutTab = Window:CreateTab("About", "info") 
     local MainTab = Window:CreateTab("Main", "home")
     local MiscTab = Window:CreateTab("Misc", "settings")
-    local CoolStuffTab = Window:CreateTab("Cool Stuff :)", "star") 
     local ConfigTab = Window:CreateTab("Config", "file-text")
 
     -- [ABOUT TAB]
@@ -57,10 +56,11 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
     
     AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/30/2026</b></font>", Content = "• Added `_G.VersionCheck = false` support to bypass version mismatch GUI for uninterrupted AFK setups."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/28/2026</b></font>", Content = "• Synced Quirk Auto Roll precisely to native game timing (No artificial delay between checks).\n• Extreme AFK FPS boost integrated to bypass entire Frame rendering natively.\n• Refactored Item utilities to cleanly house both Items and Crates."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/27/2026</b></font>", Content = "• Added Fast Yatsy Auto Roll.\n• Added Fast Auto Coin Flip.\n• Added Auto Quirk (Multi-Dropdown supported)."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/24/2026</b></font>", Content = "• Multi-select 'Use Max' now securely ignores Chests, Crates, and Quest Rerolls.\n• Rolling Frame Disabler is now a priority toggle (Autoload supported!).\n• Reverted Runes back to continuous loop teleportation to fully eliminate stuck pads."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/23/2026</b></font>", Content = "• Added Bulk Crate Opener and 'Use Max' Item features.\n• Optimized everything to be faster and smoother.\n• Fixed Rune hitboxes overlapping when switching."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/22/2026</b></font>", Content = "• Added One-Click 'Unlock Every Feature' Button\n• Fully Optimized Pad & Runes Utilities\n• Merged Resets into Custom Multi-Dropdown\n• Removed Anti-AFK (Redundant) & Reorganized Tabs"})
 
     -- [MAIN TAB]
     MainTab:CreateSection("Exploits")
@@ -186,6 +186,12 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     local Toggle_Rarity = MainTab:CreateToggle({Name = "Rarity Anywhere", CurrentValue = false, Callback = function(V) _G.RarityActive = V end})
 
     -- [MISC TAB]
+    MiscTab:CreateSection("Suggestions & Bug Reports")
+    MiscTab:CreateParagraph({Title = "⚠️ Warning", Content = "Do not spam or troll. Abusing this will result in a blacklist."})
+    local currentSuggestion, lastSuggestionTime = "", 0
+    MiscTab:CreateInput({Name = "Your Suggestion/Bug", PlaceholderText = "Type your idea or bug report...", RemoveTextAfterFocusLost = false, Callback = function(T) currentSuggestion = T end})
+    MiscTab:CreateButton({Name = "Send Message", Callback = function() if currentSuggestion == "" then Rayfield:Notify({Title = "Error", Content = "Message cannot be empty.", Duration = 2}); return end; local t = os.time(); if t - lastSuggestionTime < 300 then Rayfield:Notify({Title = "Cooldown", Content = "Wait " .. (300 - (t - lastSuggestionTime)) .. "s.", Duration = 3}); return end; lastSuggestionTime = t; if sendRequest then pcall(sendRequest, {Url = suggestionWebhook, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = game:GetService("HttpService"):JSONEncode({embeds = {{title = "New Feedback/Bug Report", color = 3447003, fields = {{name = "Sender", value = me.Name .. " (" .. me.UserId .. ")", inline = false}, {name = "Message", value = currentSuggestion, inline = false}}}}})}); Rayfield:Notify({Title = "Success", Content = "Message sent to daddy6967!", Duration = 3}) end end})
+
     MiscTab:CreateSection("Streamer Mode")
     MiscTab:CreateParagraph({Title = "Visual Only!", Content = "This only changes your name on YOUR screen. Other players will still see your real username. This is meant for showcasing the script or flexing on Discord without being recognized."})
     MiscTab:CreateInput({Name = "Fake Username", PlaceholderText = "Type desired name...", RemoveTextAfterFocusLost = false, Callback = function(T) if T ~= "" then _G.StreamerName = T end end})
@@ -201,17 +207,6 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     local Slider_Walkspeed = MiscTab:CreateSlider({Name = "Walkspeed", Range = {16, 250}, Increment = 1, CurrentValue = 16, Flag = "Slider_WS", Callback = function(V) _G.WSValue = V end})
     local Toggle_JumpPower = MiscTab:CreateToggle({Name = "Enable JumpPower", CurrentValue = false, Callback = function(V) _G.JPModifier = V end})
     local Slider_JumpPower = MiscTab:CreateSlider({Name = "JumpPower", Range = {50, 300}, Increment = 1, CurrentValue = 50, Flag = "Slider_JP", Callback = function(V) _G.JPValue = V end})
-
-    -- [COOL STUFF TAB]
-    CoolStuffTab:CreateSection("Support me :)")
-    CoolStuffTab:CreateParagraph({Title = "Donations", Content = "Donations are highly appreciated to support me to continue developing the script!"})
-    CoolStuffTab:CreateButton({Name = "Copy Robux Donation Link", Callback = function() if setclipboard then setclipboard("https://www.roblox.com/games/113283776560032/name#!/store"); Rayfield:Notify({Title = "Success", Content = "Link copied!", Duration = 3}) else Rayfield:Notify({Title = "Error", Content = "Your executor does not support clipboard copying.", Duration = 3}) end end})
-    
-    CoolStuffTab:CreateSection("Suggestions & Bug Reports")
-    CoolStuffTab:CreateParagraph({Title = "⚠️ Warning", Content = "Do not spam or troll. Abusing this will result in a blacklist."})
-    local currentSuggestion, lastSuggestionTime = "", 0
-    CoolStuffTab:CreateInput({Name = "Your Suggestion/Bug", PlaceholderText = "Type your idea or bug report...", RemoveTextAfterFocusLost = false, Callback = function(T) currentSuggestion = T end})
-    CoolStuffTab:CreateButton({Name = "Send Message", Callback = function() if currentSuggestion == "" then Rayfield:Notify({Title = "Error", Content = "Message cannot be empty.", Duration = 2}); return end; local t = os.time(); if t - lastSuggestionTime < 300 then Rayfield:Notify({Title = "Cooldown", Content = "Wait " .. (300 - (t - lastSuggestionTime)) .. "s.", Duration = 3}); return end; lastSuggestionTime = t; if sendRequest then pcall(sendRequest, {Url = suggestionWebhook, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = game:GetService("HttpService"):JSONEncode({embeds = {{title = "New Feedback/Bug Report", color = 3447003, fields = {{name = "Sender", value = me.Name .. " (" .. me.UserId .. ")", inline = false}, {name = "Message", value = currentSuggestion, inline = false}}}}})}); Rayfield:Notify({Title = "Success", Content = "Message sent to daddy6967!", Duration = 3}) end end})
 
     -- [CONFIG TAB]
     local themeFile = folderName .. "/Theme.txt"
