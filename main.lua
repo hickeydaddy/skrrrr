@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3491
+local SAFE_PLACE_VERSION = 3488
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -237,7 +237,7 @@ local function BootMainScript(isVersionSafe)
                     end)
                     
                     -- Cycle Delay interval between entire handshake segments
-                    task.wait(math.random(10, 15) / 1000) 
+                    task.wait(math.random(15, 20) / 1000) 
                 end
             else
                 task.wait(0.25) -- Idle loop if disabled or no selection
