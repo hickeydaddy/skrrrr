@@ -253,7 +253,7 @@ local function BootMainScript(isVersionSafe)
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local clickRemote = remotes:WaitForChild("Click", 9e9)
         while _G.DiceSession == currentSession do 
-            task.wait(1 / (math.random(500, 550) / 10))
+            task.wait(1 / (math.random(400, 450) / 10))
             if _G.AutoClickActive then pcall(function() clickRemote:FireServer(unpack({1})) end) end 
         end 
     end)
