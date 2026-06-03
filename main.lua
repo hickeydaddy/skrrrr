@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3491
+local SAFE_PLACE_VERSION = 3497
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -147,7 +147,7 @@ local function BootMainScript(isVersionSafe)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
             if _G.FastRollActive then
                 local now = os.clock()
-                local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
+                local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
                 if now - lastFastFire >= fastSpeed then 
                     pcall(function() rollRemote:FireServer() end)
                     lastFastFire = now 
@@ -170,7 +170,7 @@ local function BootMainScript(isVersionSafe)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
             if _G.FastYatzyRollActive then
                 local now = os.clock()
-                local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
+                local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
                 if now - lastFastFire >= fastSpeed then 
                     pcall(function() rollRemote:FireServer() end)
                     lastFastFire = now 
@@ -193,7 +193,7 @@ local function BootMainScript(isVersionSafe)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
             if _G.FastCoinFlipActive then
                 local now = os.clock()
-                local fastSpeed = 1 / (math.random(5535, 5840) / 1000)
+                local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
                 if now - lastFastFire >= fastSpeed then 
                     pcall(function() rollRemote:FireServer() end)
                     lastFastFire = now 
