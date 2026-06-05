@@ -6,7 +6,7 @@ local t_wait, t_spawn, p_call, t_insert, t_remove = task.wait, task.spawn, pcall
 
 -- [ ADJUST HERE ] 
 -- Initial wait time to let the game load before the script injects.
-t_wait(10)
+t_wait(3)
 
 -- ========================================================================
 -- MEMORY MANAGEMENT (JANITORS)
