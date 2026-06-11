@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3488
+local SAFE_PLACE_VERSION = 3497
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -95,21 +95,9 @@ local function BootMainScript(isVersionSafe)
     pcall(function() renderGui.Parent = game:GetService("CoreGui") end)
 
     -- ==========================================
-    -- 4. ENGINE BACKGROUND LOOPS & FPS MONITOR
+    -- 4. ENGINE BACKGROUND LOOPS
     -- ==========================================
     
-    -- ------------------------------------------
-    -- [ FPS BURST MONITOR ]
-    -- ------------------------------------------
-    local lastFrameTick = os.clock()
-    _G.CurrentClientFPS = 60
-    local fpsConn = game:GetService("RunService").Heartbeat:Connect(function()
-        local now = os.clock()
-        _G.CurrentClientFPS = 1 / (now - lastFrameTick)
-        lastFrameTick = now
-    end)
-    AddConn(fpsConn)
-
     -- ------------------------------------------
     -- [ AFK FRAME DISABLER LOOP ]
     -- ------------------------------------------
@@ -157,12 +145,8 @@ local function BootMainScript(isVersionSafe)
         
         while _G.DiceSession == currentSession do
             if _G.FastRollActive then
-                if _G.CurrentClientFPS < 25 then
-                    task.wait(0.5) -- Throttle during lag spike
-                    continue
-                end
                 pcall(function() rollRemote:FireServer() end)
-                task.wait(0.179) 
+                task.wait(0.175) 
             else
                 task.wait(0.1)
             end
@@ -179,12 +163,8 @@ local function BootMainScript(isVersionSafe)
         
         while _G.DiceSession == currentSession do
             if _G.FastYatzyRollActive then
-                if _G.CurrentClientFPS < 25 then
-                    task.wait(0.5) -- Throttle during lag spike
-                    continue
-                end
                 pcall(function() rollRemote:FireServer() end)
-                task.wait(0.179) 
+                task.wait(0.175) 
             else
                 task.wait(0.1)
             end
@@ -201,12 +181,8 @@ local function BootMainScript(isVersionSafe)
         
         while _G.DiceSession == currentSession do
             if _G.FastCoinFlipActive then
-                if _G.CurrentClientFPS < 25 then
-                    task.wait(0.5) -- Throttle during lag spike
-                    continue
-                end
                 pcall(function() rollRemote:FireServer() end)
-                task.wait(0.179) 
+                task.wait(0.175) 
             else
                 task.wait(0.1)
             end
@@ -222,12 +198,8 @@ local function BootMainScript(isVersionSafe)
         local glyphRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("RollGlyph", 9e9)
         while _G.DiceSession == currentSession do 
             if _G.GlyphRollActive then 
-                if _G.CurrentClientFPS < 25 then
-                    task.wait(0.5) -- Throttle during lag spike
-                    continue
-                end
                 pcall(function() glyphRemote:InvokeServer() end) 
-                task.wait(0.019) 
+                task.wait(0.02) 
             else
                 task.wait(0.1)
             end
@@ -245,10 +217,6 @@ local function BootMainScript(isVersionSafe)
         
         while _G.DiceSession == currentSession do
             if _G.AutoQuirkRollActive and type(_G.SelectedQuirks) == "table" and #_G.SelectedQuirks > 0 then
-                if _G.CurrentClientFPS < 25 then
-                    task.wait(0.5) -- Throttle during lag spike
-                    continue
-                end
                 for _, quirkCategory in ipairs(_G.SelectedQuirks) do
                     if not _G.AutoQuirkRollActive or _G.DiceSession ~= currentSession then break end
                     
@@ -274,12 +242,8 @@ local function BootMainScript(isVersionSafe)
         local clickRemote = remotes:WaitForChild("Click", 9e9)
         while _G.DiceSession == currentSession do 
             if _G.AutoClickActive then 
-                if _G.CurrentClientFPS < 25 then
-                    task.wait(0.5) -- Throttle during lag spike
-                    continue
-                end
                 pcall(function() clickRemote:FireServer(unpack({1})) end) 
-                task.wait(0.024) 
+                task.wait(0.025) 
             else
                 task.wait(0.1)
             end
