@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3497
+local SAFE_PLACE_VERSION = 3488
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -139,22 +139,17 @@ local function BootMainScript(isVersionSafe)
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
-        local remotes = rep:WaitForChild("Remotes", 9e9)
-        local rollRemote = remotes:WaitForChild("Roll", 9e9)
-        local lastFastFire = 0
-        local conn
-        conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-            if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
+        local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("Roll", 9e9)
+        
+        while _G.DiceSession == currentSession do
             if _G.FastRollActive then
-                local now = os.clock()
+                pcall(function() rollRemote:FireServer() end)
                 local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
-                if now - lastFastFire >= fastSpeed then 
-                    pcall(function() rollRemote:FireServer() end)
-                    lastFastFire = now 
-                end
+                task.wait(fastSpeed)
+            else
+                task.wait(0.1)
             end
-        end)
-        AddConn(conn)
+        end
     end)
 
     -- ------------------------------------------
@@ -162,22 +157,17 @@ local function BootMainScript(isVersionSafe)
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
-        local remotes = rep:WaitForChild("Remotes", 9e9)
-        local rollRemote = remotes:WaitForChild("YatzyRoll", 9e9)
-        local lastFastFire = 0
-        local conn
-        conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-            if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
+        local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("YatzyRoll", 9e9)
+        
+        while _G.DiceSession == currentSession do
             if _G.FastYatzyRollActive then
-                local now = os.clock()
+                pcall(function() rollRemote:FireServer() end)
                 local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
-                if now - lastFastFire >= fastSpeed then 
-                    pcall(function() rollRemote:FireServer() end)
-                    lastFastFire = now 
-                end
+                task.wait(fastSpeed)
+            else
+                task.wait(0.1)
             end
-        end)
-        AddConn(conn)
+        end
     end)
 
     -- ------------------------------------------
@@ -185,22 +175,17 @@ local function BootMainScript(isVersionSafe)
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
-        local remotes = rep:WaitForChild("Remotes", 9e9)
-        local rollRemote = remotes:WaitForChild("CoinFlip", 9e9)
-        local lastFastFire = 0
-        local conn
-        conn = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
-            if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
+        local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("CoinFlip", 9e9)
+        
+        while _G.DiceSession == currentSession do
             if _G.FastCoinFlipActive then
-                local now = os.clock()
+                pcall(function() rollRemote:FireServer() end)
                 local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
-                if now - lastFastFire >= fastSpeed then 
-                    pcall(function() rollRemote:FireServer() end)
-                    lastFastFire = now 
-                end
+                task.wait(fastSpeed)
+            else
+                task.wait(0.1)
             end
-        end)
-        AddConn(conn)
+        end
     end)
 
     -- ------------------------------------------
