@@ -146,7 +146,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do
             if _G.FastRollActive then
                 pcall(function() rollRemote:FireServer() end)
-                task.wait(0.179) -- Dynamic average restored
+                task.wait(0.179) 
             else
                 task.wait(0.1)
             end
@@ -164,7 +164,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do
             if _G.FastYatzyRollActive then
                 pcall(function() rollRemote:FireServer() end)
-                task.wait(0.179) -- Dynamic average restored
+                task.wait(0.179) 
             else
                 task.wait(0.1)
             end
@@ -182,7 +182,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do
             if _G.FastCoinFlipActive then
                 pcall(function() rollRemote:FireServer() end)
-                task.wait(0.179) -- Dynamic average restored
+                task.wait(0.179) 
             else
                 task.wait(0.1)
             end
@@ -199,7 +199,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do 
             if _G.GlyphRollActive then 
                 pcall(function() glyphRemote:InvokeServer() end) 
-                task.wait(0.019) -- Correct ultra-fast speed restored
+                task.wait(0.019) 
             else
                 task.wait(0.1)
             end
@@ -243,7 +243,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do 
             if _G.AutoClickActive then 
                 pcall(function() clickRemote:FireServer(unpack({1})) end) 
-                task.wait(0.024) -- Native average clicker speed restored
+                task.wait(0.024) 
             else
                 task.wait(0.1)
             end
