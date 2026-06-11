@@ -56,7 +56,7 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
     
     AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/11/2026</b></font>", Content = "• Added Real-Time FPS Packet Throttling to completely stop Anti-Cheat kicks during lag spikes.\n• Removed ALL randomized math logic and replaced it with stable, exact average intervals to completely prevent any timing jitter."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/11/2026</b></font>", Content = "• Synchronized all loop delays strictly to the precise static intervals (0.175s, 0.02s, 0.025s) with NO randomized math jitter."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/30/2026</b></font>", Content = "• Added `_G.VersionCheck = false` support to bypass version mismatch GUI for uninterrupted AFK setups."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/28/2026</b></font>", Content = "• Synced Quirk Auto Roll precisely to native game timing.\n• Extreme AFK FPS boost integrated to bypass entire Frame rendering natively.\n• Refactored Item utilities to cleanly house both Items and Crates."})
     AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/27/2026</b></font>", Content = "• Added Fast Yatsy Auto Roll.\n• Added Fast Auto Coin Flip.\n• Added Auto Quirk (Multi-Dropdown supported)."})
