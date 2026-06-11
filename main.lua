@@ -23,7 +23,7 @@ if not isSupported then
 else
     local canLog, logFile, currentTime = true, folderName .. "/LastConnectionLog.txt", os.time()
     pcall(function() if isfile and isfile(logFile) and (currentTime - tonumber(readfile(logFile))) < 1800 then canLog = false end end)
-    if canLog then pcall(function() if writefile then writefile(logFile, tostring(currentTime)) end end); task.delay(2, ExternalModule.LogToDiscord, sendRequest, me, isSupported, gameName, "CONNECTED", string.format("Game executed on: %s [supported]", gameName)) end
+    if canLog then pcall(function() if writefile then writefile(logFile, tostring(currentTime)) end end); task.delay(math.random(1, 3), ExternalModule.LogToDiscord, sendRequest, me, isSupported, gameName, "CONNECTED", string.format("Game executed on: %s [supported]", gameName)) end
 end
 
 -- ==========================================
@@ -97,12 +97,46 @@ local function BootMainScript(isVersionSafe)
     -- ==========================================
     -- 4. ENGINE BACKGROUND LOOPS
     -- ==========================================
+    local RunService = game:GetService("RunService")
+    local MIN_REMOTE_INTERVAL = 0.17
+
+    local function getRollInterval()
+        return math.random(177, 181) / 1000
+    end
+
+    local function startHeartbeatRemoteLoop(isActive, fireRemote)
+        local nextFireAt = nil
+        local lastFireAt = 0
+        local conn
+
+        conn = RunService.Heartbeat:Connect(function()
+            if _G.DiceSession ~= currentSession then
+                conn:Disconnect()
+                return
+            end
+
+            if not isActive() then
+                nextFireAt = nil
+                return
+            end
+
+            local now = os.clock()
+            nextFireAt = nextFireAt or now
+
+            if now >= nextFireAt and (now - lastFireAt) >= MIN_REMOTE_INTERVAL then
+                fireRemote()
+                lastFireAt = now
+                nextFireAt = now + getRollInterval()
+            end
+        end)
+
+        AddConn(conn)
+    end
     
     -- ------------------------------------------
     -- [ AFK FRAME DISABLER LOOP ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         while _G.DiceSession == currentSession do
             if _G.DisableRollingFrameActive or _G.RemoveEveryFrameActive then
                 local player = game:GetService("Players").LocalPlayer
@@ -139,70 +173,54 @@ local function BootMainScript(isVersionSafe)
     -- [ STANDARD FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
-        local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("Roll", 9e9)
-        
-        while _G.DiceSession == currentSession do
-            if _G.FastRollActive then
-                pcall(function() rollRemote:FireServer() end)
-                task.wait(0.175) 
-            else
-                task.wait(0.1)
-            end
-        end
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local rollRemote = remotes:WaitForChild("Roll", 9e9)
+        startHeartbeatRemoteLoop(function()
+            return _G.FastRollActive
+        end, function()
+            pcall(function() rollRemote:FireServer() end)
+        end)
     end)
 
     -- ------------------------------------------
     -- [ YATZY FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
-        local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("YatzyRoll", 9e9)
-        
-        while _G.DiceSession == currentSession do
-            if _G.FastYatzyRollActive then
-                pcall(function() rollRemote:FireServer() end)
-                task.wait(0.175) 
-            else
-                task.wait(0.1)
-            end
-        end
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local rollRemote = remotes:WaitForChild("YatzyRoll", 9e9)
+        startHeartbeatRemoteLoop(function()
+            return _G.FastYatzyRollActive
+        end, function()
+            pcall(function() rollRemote:FireServer() end)
+        end)
     end)
 
     -- ------------------------------------------
     -- [ COIN FLIP FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
-        local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("CoinFlip", 9e9)
-        
-        while _G.DiceSession == currentSession do
-            if _G.FastCoinFlipActive then
-                pcall(function() rollRemote:FireServer() end)
-                task.wait(0.175) 
-            else
-                task.wait(0.1)
-            end
-        end
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local rollRemote = remotes:WaitForChild("CoinFlip", 9e9)
+        startHeartbeatRemoteLoop(function()
+            return _G.FastCoinFlipActive
+        end, function()
+            pcall(function() rollRemote:FireServer() end)
+        end)
     end)
 
     -- ------------------------------------------
     -- [ FAST GLYPH AUTO ROLL LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
-        local glyphRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("RollGlyph", 9e9)
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local glyphRemote = remotes:WaitForChild("RollGlyph", 9e9)
         while _G.DiceSession == currentSession do 
-            if _G.GlyphRollActive then 
-                pcall(function() glyphRemote:InvokeServer() end) 
-                task.wait(0.02) 
-            else
-                task.wait(0.1)
-            end
+            task.wait(1 / (math.random(500, 550) / 10))
+            if _G.GlyphRollActive then pcall(function() glyphRemote:InvokeServer() end) end 
         end 
     end)
     
@@ -210,7 +228,6 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO QUIRK ROLL LOOP ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local quirkRemote = remotes:WaitForChild("RollQuirk", 9e9)
@@ -220,14 +237,18 @@ local function BootMainScript(isVersionSafe)
                 for _, quirkCategory in ipairs(_G.SelectedQuirks) do
                     if not _G.AutoQuirkRollActive or _G.DiceSession ~= currentSession then break end
                     
-                    pcall(function() quirkRemote:InvokeServer("GetRank", quirkCategory) end)
-                    task.wait(0.01) 
-                    pcall(function() quirkRemote:InvokeServer("Roll", quirkCategory) end)
+                    -- Synchronous Handshake: No task.wait() between these calls!
+                    -- This perfectly mirrors the game's native u104() execution flow.
+                    pcall(function()
+                        quirkRemote:InvokeServer("GetRank", quirkCategory)
+                        quirkRemote:InvokeServer("Roll", quirkCategory)
+                    end)
                     
-                    task.wait(0.1) 
+                    -- Cycle Delay interval between entire handshake segments
+                    task.wait(math.random(15, 20) / 1000) 
                 end
             else
-                task.wait(0.25)
+                task.wait(0.25) -- Idle loop if disabled or no selection
             end
         end
     end)
@@ -236,17 +257,12 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO CLICKER LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local clickRemote = remotes:WaitForChild("Click", 9e9)
         while _G.DiceSession == currentSession do 
-            if _G.AutoClickActive then 
-                pcall(function() clickRemote:FireServer(unpack({1})) end) 
-                task.wait(0.025) 
-            else
-                task.wait(0.1)
-            end
+            task.wait(1 / (math.random(400, 450) / 10))
+            if _G.AutoClickActive then pcall(function() clickRemote:FireServer(unpack({1})) end) end 
         end 
     end)
 
@@ -254,7 +270,6 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO CLAIM MASTERY LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local claimRemote = remotes:WaitForChild("ClaimMastery", 9e9)
@@ -265,19 +280,18 @@ local function BootMainScript(isVersionSafe)
                     for _, m in ipairs(mf:GetChildren()) do 
                         if not _G.AutoMasteryActive or _G.DiceSession ~= currentSession then break end
                         pcall(function() claimRemote:FireServer(m.Name) end)
-                        task.wait(0.061) 
+                        task.wait(math.random(55, 67) / 1000) 
                     end 
                 end 
             end
-            task.wait(1.105) 
+            task.wait(math.random(99, 122) / 100) 
         end 
     end)
 
     -- ------------------------------------------
-    -- [ AUTO UPGRADES LOOP ]
+    -- [ AUTO UPGRADES LOOP (Coins, PP, Cash, Silver, etc.) ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local upRem = remotes:WaitForChild("Upgrade", 9e9)
@@ -292,7 +306,7 @@ local function BootMainScript(isVersionSafe)
             ["CashUpgrades"] = {ID = "Cash", Stat = "Cash"}, ["FlipUpgrades"] = {ID = "Silver", Stat = "Silver"}
         }
         while _G.DiceSession == currentSession do
-            task.wait(0.09) 
+            task.wait(math.random(80, 100) / 1000) 
             if _G.AutoAllUpgrades and _G.AutoUpgradesList and #_G.AutoUpgradesList > 0 then 
                 local folder = me:FindFirstChild("Data") and me.Data:FindFirstChild("Upgrades")
                 if folder then
@@ -304,7 +318,7 @@ local function BootMainScript(isVersionSafe)
                                     local guiFolder = me.PlayerGui.Upgrades:FindFirstChild(guiName)
                                     if guiFolder and guiFolder:FindFirstChild("MainFrame") and guiFolder.MainFrame:FindFirstChild(u.Name) then
                                         pcall(function() upRem:FireServer(u.Name, "Max", data.ID, data.Stat) end)
-                                        task.wait(0.03) 
+                                        task.wait(math.random(25, 35) / 1000) 
                                     end
                                 end
                             end
@@ -316,10 +330,9 @@ local function BootMainScript(isVersionSafe)
     end)
 
     -- ------------------------------------------
-    -- [ AUTO RESETS LOOP ]
+    -- [ AUTO RESETS LOOP (Overroll, Rebirth, Tiers) ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
         local modFolder = rep:WaitForChild("Modules", 9e9)
         local resetMod = modFolder:WaitForChild("Resets", 9e9)
@@ -327,14 +340,14 @@ local function BootMainScript(isVersionSafe)
         local ResetRemote = remotes:WaitForChild("Reset", 9e9)
         local success, ResetModule = pcall(function() return require(resetMod) end)
         while _G.DiceSession == currentSession do
-            task.wait(0.03) 
+            task.wait(math.random(25, 35) / 1000) 
             if _G.AutoResetsActive and success and ResetModule and ResetModule.resetLayers and _G.AutoResetsList then
                 for _, resetName in ipairs(_G.AutoResetsList) do
                     pcall(function()
                         local layerData = ResetModule.resetLayers[resetName]
                         if layerData and ResetModule:CanPlayerReset(me, layerData.RequirementCurrencies) then
                             ResetRemote:FireServer(resetName)
-                            task.wait(0.0585)
+                            task.wait(math.random(50, 67) / 1000)
                         end
                     end)
                 end
@@ -346,12 +359,11 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO UPGRADE TREE (UT) LOOP ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local utRem = remotes:WaitForChild("UTUpgrade", 9e9)
         while _G.DiceSession == currentSession do
-            task.wait(0.65)
+            task.wait(math.random(600, 700) / 1000)
             if _G.AutoUT then
                 pcall(function()
                     local utFolder = workspace:FindFirstChild("Maps") and workspace.Maps:FindFirstChild("Overworld A-2 (World 1)") and workspace.Maps["Overworld A-2 (World 1)"]:FindFirstChild("Upgrade Tree")
@@ -360,7 +372,7 @@ local function BootMainScript(isVersionSafe)
                             if not _G.AutoUT or _G.DiceSession ~= currentSession then break end
                             if model:IsA("Model") then
                                 utRem:FireServer(model.Name)
-                                task.wait(0.0225) 
+                                task.wait(math.random(20, 25) / 1000) 
                             end
                         end
                     end
@@ -391,11 +403,10 @@ local function BootMainScript(isVersionSafe)
     -- ------------------------------------------
     local lastSelectedRuneName = _G.SelectedRuneName
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
             
-            -- Handle Rune Switching
+            -- Handle Rune Switching (Fierce Cleanup)
             if lastSelectedRuneName ~= _G.SelectedRuneName then
                 local rf = workspace:FindFirstChild("Runes")
                 if rf and hrp then
@@ -409,7 +420,7 @@ local function BootMainScript(isVersionSafe)
                         end
                     end
                     lastSelectedRuneName = _G.SelectedRuneName
-                    task.wait(0.15) 
+                    task.wait(0.15) -- Yield so the server registers the old pad going away
                 end
             end
 
@@ -420,16 +431,17 @@ local function BootMainScript(isVersionSafe)
                     hb.CFrame = hrp.CFrame
                     if firetouchinterest then 
                         firetouchinterest(hb, hrp, 0)
-                        task.wait(0.045) 
+                        task.wait(math.random(40, 50) / 1000) 
                         firetouchinterest(hb, hrp, 1) 
                     else 
-                        task.wait(0.045)
+                        task.wait(math.random(40, 50) / 1000)
                         hb.CFrame = _G.HiddenCFrame 
                     end
                 else
                     task.wait(0.2)
                 end
             else
+                -- Not active: Ensure active hitbox is fully cleared from player
                 local hb = getRuneHitbox(_G.SelectedRuneName)
                 if hb and hb.CFrame ~= _G.HiddenCFrame then 
                     hb.CFrame = _G.HiddenCFrame 
@@ -444,7 +456,6 @@ local function BootMainScript(isVersionSafe)
     -- [ RARITY ANYWHERE LOOP ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
 
@@ -455,16 +466,17 @@ local function BootMainScript(isVersionSafe)
                     hb.CFrame = hrp.CFrame
                     if firetouchinterest then 
                         firetouchinterest(hb, hrp, 0)
-                        task.wait(0.045) 
+                        task.wait(math.random(40, 50) / 1000) 
                         firetouchinterest(hb, hrp, 1) 
                     else 
-                        task.wait(0.045)
+                        task.wait(math.random(40, 50) / 1000)
                         hb.CFrame = _G.HiddenCFrame 
                     end
                 else
                     task.wait(0.2)
                 end
             else 
+                -- Not active: Ensure hitbox is hidden
                 local hb = getRarityHitbox()
                 if hb and hb.CFrame ~= _G.HiddenCFrame then 
                     hb.CFrame = _G.HiddenCFrame 
@@ -476,10 +488,9 @@ local function BootMainScript(isVersionSafe)
     end)
 
     -- ------------------------------------------
-    -- [ STREAMER MODE LOOP ]
+    -- [ STREAMER MODE LOOP (Fake Username) ]
     -- ------------------------------------------
     task.spawn(function()
-        task.wait(0.3) -- Startup Delay
         while _G.DiceSession == currentSession do
             if _G.StreamerMode and me.Character then
                 pcall(function()
@@ -491,15 +502,15 @@ local function BootMainScript(isVersionSafe)
                     end
                 end)
             end
-            task.wait(0.45) 
+            task.wait(math.random(400, 500) / 1000) 
         end
     end)
 
     -- ------------------------------------------
-    -- [ RENDER LOOP ]
+    -- [ RENDER LOOP (FPS Boost, Walkspeed, JumpPower) ]
     -- ------------------------------------------
     local renderConn
-    renderConn = game:GetService("RunService").RenderStepped:Connect(function() 
+    renderConn = RunService.RenderStepped:Connect(function() 
         if _G.DiceSession ~= currentSession then renderConn:Disconnect(); return end
         if _G.FPSBoostActive then renderFrame.Visible = true; renderFrame.BackgroundColor3 = _G.RenderingColor else renderFrame.Visible = false end
         if me.Character and me.Character:FindFirstChild("Humanoid") then 
@@ -518,6 +529,7 @@ end
 -- ==========================================
 local currentVersion = game.PlaceVersion
 
+-- If the user sets _G.VersionCheck = false, bypass the warning GUI
 if currentVersion == SAFE_PLACE_VERSION or _G.VersionCheck == false then 
     BootMainScript(currentVersion == SAFE_PLACE_VERSION) 
 else
