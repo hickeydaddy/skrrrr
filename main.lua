@@ -102,6 +102,7 @@ local function BootMainScript(isVersionSafe)
     -- [ AFK FRAME DISABLER LOOP ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         while _G.DiceSession == currentSession do
             if _G.DisableRollingFrameActive or _G.RemoveEveryFrameActive then
                 local player = game:GetService("Players").LocalPlayer
@@ -138,14 +139,14 @@ local function BootMainScript(isVersionSafe)
     -- [ STANDARD FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("Roll", 9e9)
         
         while _G.DiceSession == currentSession do
             if _G.FastRollActive then
                 pcall(function() rollRemote:FireServer() end)
-                local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
-                task.wait(fastSpeed)
+                task.wait(math.random(200, 250) / 1000)
             else
                 task.wait(0.1)
             end
@@ -156,14 +157,14 @@ local function BootMainScript(isVersionSafe)
     -- [ YATZY FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("YatzyRoll", 9e9)
         
         while _G.DiceSession == currentSession do
             if _G.FastYatzyRollActive then
                 pcall(function() rollRemote:FireServer() end)
-                local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
-                task.wait(fastSpeed)
+                task.wait(math.random(200, 250) / 1000)
             else
                 task.wait(0.1)
             end
@@ -174,14 +175,14 @@ local function BootMainScript(isVersionSafe)
     -- [ COIN FLIP FAST AUTO ROLL ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local rollRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("CoinFlip", 9e9)
         
         while _G.DiceSession == currentSession do
             if _G.FastCoinFlipActive then
                 pcall(function() rollRemote:FireServer() end)
-                local fastSpeed = 1 / (math.random(5535, 5640) / 1000)
-                task.wait(fastSpeed)
+                task.wait(math.random(200, 250) / 1000)
             else
                 task.wait(0.1)
             end
@@ -192,12 +193,17 @@ local function BootMainScript(isVersionSafe)
     -- [ FAST GLYPH AUTO ROLL LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local glyphRemote = remotes:WaitForChild("RollGlyph", 9e9)
         while _G.DiceSession == currentSession do 
-            task.wait(1 / (math.random(500, 550) / 10))
-            if _G.GlyphRollActive then pcall(function() glyphRemote:InvokeServer() end) end 
+            if _G.GlyphRollActive then 
+                pcall(function() glyphRemote:InvokeServer() end) 
+                task.wait(math.random(200, 250) / 1000)
+            else
+                task.wait(0.1)
+            end
         end 
     end)
     
@@ -205,6 +211,7 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO QUIRK ROLL LOOP ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local quirkRemote = remotes:WaitForChild("RollQuirk", 9e9)
@@ -214,15 +221,12 @@ local function BootMainScript(isVersionSafe)
                 for _, quirkCategory in ipairs(_G.SelectedQuirks) do
                     if not _G.AutoQuirkRollActive or _G.DiceSession ~= currentSession then break end
                     
-                    -- Synchronous Handshake: No task.wait() between these calls!
-                    -- This perfectly mirrors the game's native u104() execution flow.
-                    pcall(function()
-                        quirkRemote:InvokeServer("GetRank", quirkCategory)
-                        quirkRemote:InvokeServer("Roll", quirkCategory)
-                    end)
+                    pcall(function() quirkRemote:InvokeServer("GetRank", quirkCategory) end)
+                    task.wait(0.01) -- Micro-yield to prevent same-tick firing
+                    pcall(function() quirkRemote:InvokeServer("Roll", quirkCategory) end)
                     
-                    -- Cycle Delay interval between entire handshake segments
-                    task.wait(math.random(15, 20) / 1000) 
+                    -- Safe Delay interval between entire handshake segments
+                    task.wait(math.random(80, 120) / 1000) 
                 end
             else
                 task.wait(0.25) -- Idle loop if disabled or no selection
@@ -234,12 +238,17 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO CLICKER LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local clickRemote = remotes:WaitForChild("Click", 9e9)
         while _G.DiceSession == currentSession do 
-            task.wait(1 / (math.random(400, 450) / 10))
-            if _G.AutoClickActive then pcall(function() clickRemote:FireServer(unpack({1})) end) end 
+            if _G.AutoClickActive then 
+                pcall(function() clickRemote:FireServer(unpack({1})) end) 
+                task.wait(math.random(40, 60) / 1000)
+            else
+                task.wait(0.1)
+            end
         end 
     end)
 
@@ -247,6 +256,7 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO CLAIM MASTERY LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local claimRemote = remotes:WaitForChild("ClaimMastery", 9e9)
@@ -269,6 +279,7 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO UPGRADES LOOP (Coins, PP, Cash, Silver, etc.) ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local upRem = remotes:WaitForChild("Upgrade", 9e9)
@@ -310,6 +321,7 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO RESETS LOOP (Overroll, Rebirth, Tiers) ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local modFolder = rep:WaitForChild("Modules", 9e9)
         local resetMod = modFolder:WaitForChild("Resets", 9e9)
@@ -336,6 +348,7 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO UPGRADE TREE (UT) LOOP ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         local rep = game:GetService("ReplicatedStorage")
         local remotes = rep:WaitForChild("Remotes", 9e9)
         local utRem = remotes:WaitForChild("UTUpgrade", 9e9)
@@ -380,6 +393,7 @@ local function BootMainScript(isVersionSafe)
     -- ------------------------------------------
     local lastSelectedRuneName = _G.SelectedRuneName
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
             
@@ -433,6 +447,7 @@ local function BootMainScript(isVersionSafe)
     -- [ RARITY ANYWHERE LOOP ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         while _G.DiceSession == currentSession do 
             local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
 
@@ -468,6 +483,7 @@ local function BootMainScript(isVersionSafe)
     -- [ STREAMER MODE LOOP (Fake Username) ]
     -- ------------------------------------------
     task.spawn(function()
+        task.wait(math.random(100, 500) / 1000) -- Startup Jitter
         while _G.DiceSession == currentSession do
             if _G.StreamerMode and me.Character then
                 pcall(function()
