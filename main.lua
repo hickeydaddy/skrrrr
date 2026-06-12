@@ -103,9 +103,9 @@ local function BootMainScript(isVersionSafe)
     -- Adjust your execution speeds here! (All numbers are in seconds)
     ----------------------------------------------------------------------
     local SPEED_CONFIG = {
-        StandardRoll = 0.18,
-        YatzyRoll    = 0.18,
-        CoinFlip     = 0.18,
+        StandardRoll = 0.19,
+        YatzyRoll    = 0.19,
+        CoinFlip     = 0.19,
         GlyphRoll    = 0.02,
         AutoClicker  = 0.025,
         QuirkCycle   = 0.1
