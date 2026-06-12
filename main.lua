@@ -110,6 +110,10 @@ local function BootMainScript(isVersionSafe)
         AutoClicker  = 0.025,
         QuirkCycle   = 0.1
     }
+    -- If the measured delta between heartbeats exceeds this threshold, a lag spike
+    -- is assumed. The timer is clamped so only ONE remote fires on recovery instead
+    -- of a burst of back-to-back calls that could hit the server's remote rate-cap.
+    local BURST_GUARD_DELTA = 0.5 -- seconds
     ----------------------------------------------------------------------
 
     -- ------------------------------------------
@@ -160,10 +164,21 @@ local function BootMainScript(isVersionSafe)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
             if _G.FastRollActive then
                 local now = os.clock()
-                if now - lastFastFire >= SPEED_CONFIG.StandardRoll then 
+                local delta = now - lastFastFire
+                -- Lag-spike guard: if the gap is suspiciously large, clamp it so
+                -- the loop fires exactly once on recovery (not a burst of calls).
+                if delta > BURST_GUARD_DELTA then
+                    lastFastFire = now - SPEED_CONFIG.StandardRoll
+                    delta = SPEED_CONFIG.StandardRoll
+                end
+                if delta >= SPEED_CONFIG.StandardRoll then 
                     pcall(function() rollRemote:FireServer() end)
                     lastFastFire = now 
                 end
+            else
+                -- Keep the timestamp fresh while inactive so a long idle period
+                -- followed by re-enabling still produces at most one immediate fire.
+                lastFastFire = os.clock()
             end
         end)
         AddConn(conn)
@@ -181,10 +196,17 @@ local function BootMainScript(isVersionSafe)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
             if _G.FastYatzyRollActive then
                 local now = os.clock()
-                if now - lastFastFire >= SPEED_CONFIG.YatzyRoll then 
+                local delta = now - lastFastFire
+                if delta > BURST_GUARD_DELTA then
+                    lastFastFire = now - SPEED_CONFIG.YatzyRoll
+                    delta = SPEED_CONFIG.YatzyRoll
+                end
+                if delta >= SPEED_CONFIG.YatzyRoll then 
                     pcall(function() rollRemote:FireServer() end)
                     lastFastFire = now 
                 end
+            else
+                lastFastFire = os.clock()
             end
         end)
         AddConn(conn)
@@ -202,10 +224,17 @@ local function BootMainScript(isVersionSafe)
             if _G.DiceSession ~= currentSession then conn:Disconnect(); return end
             if _G.FastCoinFlipActive then
                 local now = os.clock()
-                if now - lastFastFire >= SPEED_CONFIG.CoinFlip then 
+                local delta = now - lastFastFire
+                if delta > BURST_GUARD_DELTA then
+                    lastFastFire = now - SPEED_CONFIG.CoinFlip
+                    delta = SPEED_CONFIG.CoinFlip
+                end
+                if delta >= SPEED_CONFIG.CoinFlip then 
                     pcall(function() rollRemote:FireServer() end)
                     lastFastFire = now 
                 end
+            else
+                lastFastFire = os.clock()
             end
         end)
         AddConn(conn)
