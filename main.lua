@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3504
+local SAFE_PLACE_VERSION = 3497
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -60,6 +60,8 @@ _G.RenderingColor = Color3.fromRGB(0, 0, 0)
 _G.HiddenCFrame = CFrame.new(0, 5000, 0)
 _G.SelectedRuneName = "Basic"
 _G.SelectedCrate = "Basic Crate"
+_G.CrateAmount = 1
+_G.AutoCrateAmount = 100
 _G.CrateDelay = 0.015
 _G.SelectedUseItems = {}
 _G.SelectedQuirks = {}
@@ -168,6 +170,8 @@ local function BootMainScript(isVersionSafe)
             if _G.FastRollActive then
                 local now = os.clock()
                 local delta = now - lastFastFire
+                -- Lag-spike guard: if the gap is suspiciously large, clamp it so
+                -- the loop fires exactly once on recovery (not a burst of calls).
                 if delta > BURST_GUARD_DELTA then
                     lastFastFire = now - SPEED_CONFIG.StandardRoll
                     delta = SPEED_CONFIG.StandardRoll
@@ -177,6 +181,8 @@ local function BootMainScript(isVersionSafe)
                     lastFastFire = now 
                 end
             else
+                -- Keep the timestamp fresh while inactive so a long idle period
+                -- followed by re-enabling still produces at most one immediate fire.
                 lastFastFire = os.clock()
             end
         end)
@@ -247,7 +253,7 @@ local function BootMainScript(isVersionSafe)
         local openCrate = rep:WaitForChild("Remotes", 9e9):WaitForChild("OpenCrate", 9e9)
         while _G.DiceSession == currentSession do
             if _G.AutoCrateActive and _G.SelectedCrate then
-                pcall(function() openCrate:FireServer(_G.SelectedCrate, 1) end) 
+                pcall(function() openCrate:FireServer(_G.SelectedCrate, _G.AutoCrateAmount or 100) end) 
                 task.wait(_G.CrateDelay or 0.015)
             else
                 task.wait(0.1)
@@ -581,6 +587,7 @@ end
 -- ==========================================
 local currentVersion = game.PlaceVersion
 
+-- If the user sets _G.VersionCheck = false, bypass the warning GUI
 if currentVersion == SAFE_PLACE_VERSION or _G.VersionCheck == false then 
     BootMainScript(currentVersion == SAFE_PLACE_VERSION) 
 else
