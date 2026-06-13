@@ -47,7 +47,7 @@ _G.GlyphRollActive = false
 
 -- Utility States
 _G.RuneActive, _G.AutoMasteryActive, _G.AutoAllUpgrades = false, false, false
-_G.AutoClickActive, _G.AutoDropActive, _G.RarityActive = false, false, false
+_G.AutoClickActive, _G.AutoDropActive, _G.RarityActive, _G.AutoCrateActive = false, false, false, false
 _G.AutoUpgradesList = {"Coins"} 
 _G.AutoResetsActive = false
 _G.AutoResetsList = {"Overroll"}
@@ -60,7 +60,7 @@ _G.RenderingColor = Color3.fromRGB(0, 0, 0)
 _G.HiddenCFrame = CFrame.new(0, 5000, 0)
 _G.SelectedRuneName = "Basic"
 _G.SelectedCrate = "Basic Crate"
-_G.CrateAmount = 1
+_G.CrateDelay = 0.015
 _G.SelectedUseItems = {}
 _G.SelectedQuirks = {}
 _G.AutoQuirkRollActive = false
@@ -103,14 +103,16 @@ local function BootMainScript(isVersionSafe)
     -- Adjust your execution speeds here! (All numbers are in seconds)
     ----------------------------------------------------------------------
     local SPEED_CONFIG = {
-        StandardRoll = 0.175,
-        YatzyRoll    = 0.175,
-        CoinFlip     = 0.175,
-        GlyphRoll    = 0.02,
-        AutoClicker  = 0.025,
-        AutoDrop     = 0.11,
-        QuirkCycle   = 0.1
+        StandardRoll     = 0.175,
+        YatzyRoll        = 0.175,
+        CoinFlip         = 0.175,
+        GlyphRoll        = 0.02,
+        AutoClicker      = 0.025,
+        AutoDrop         = 0.11,
+        QuirkSwitchDelay = 10,     -- Time to lock onto one quirk before switching
+        QuirkRollDelay   = 0.02    -- Delay between spammed rolls on that locked quirk
     }
+    
     -- If the measured delta between heartbeats exceeds this threshold, a lag spike
     -- is assumed. The timer is clamped so only ONE remote fires on recovery instead
     -- of a burst of back-to-back calls that could hit the server's remote rate-cap.
@@ -166,8 +168,6 @@ local function BootMainScript(isVersionSafe)
             if _G.FastRollActive then
                 local now = os.clock()
                 local delta = now - lastFastFire
-                -- Lag-spike guard: if the gap is suspiciously large, clamp it so
-                -- the loop fires exactly once on recovery (not a burst of calls).
                 if delta > BURST_GUARD_DELTA then
                     lastFastFire = now - SPEED_CONFIG.StandardRoll
                     delta = SPEED_CONFIG.StandardRoll
@@ -177,8 +177,6 @@ local function BootMainScript(isVersionSafe)
                     lastFastFire = now 
                 end
             else
-                -- Keep the timestamp fresh while inactive so a long idle period
-                -- followed by re-enabling still produces at most one immediate fire.
                 lastFastFire = os.clock()
             end
         end)
@@ -242,6 +240,22 @@ local function BootMainScript(isVersionSafe)
     end)
 
     -- ------------------------------------------
+    -- [ AUTO CRATE OPENER LOOP ]
+    -- ------------------------------------------
+    task.spawn(function()
+        local rep = game:GetService("ReplicatedStorage")
+        local openCrate = rep:WaitForChild("Remotes", 9e9):WaitForChild("OpenCrate", 9e9)
+        while _G.DiceSession == currentSession do
+            if _G.AutoCrateActive and _G.SelectedCrate then
+                pcall(function() openCrate:FireServer(_G.SelectedCrate, 1) end) 
+                task.wait(_G.CrateDelay or 0.015)
+            else
+                task.wait(0.1)
+            end
+        end
+    end)
+
+    -- ------------------------------------------
     -- [ FAST GLYPH AUTO ROLL LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
@@ -269,11 +283,16 @@ local function BootMainScript(isVersionSafe)
                 for _, quirkCategory in ipairs(_G.SelectedQuirks) do
                     if not _G.AutoQuirkRollActive or _G.DiceSession ~= currentSession then break end
                     
+                    -- Initial Handshake for the category
                     pcall(function() quirkRemote:InvokeServer("GetRank", quirkCategory) end)
-                    task.wait(0.01) 
-                    pcall(function() quirkRemote:InvokeServer("Roll", quirkCategory) end)
                     
-                    task.wait(SPEED_CONFIG.QuirkCycle) 
+                    local switchTime = os.clock() + SPEED_CONFIG.QuirkSwitchDelay
+                    
+                    -- Aggressively spam rolls on this single category until switch time
+                    while os.clock() < switchTime and _G.AutoQuirkRollActive and _G.DiceSession == currentSession do
+                        pcall(function() quirkRemote:InvokeServer("Roll", quirkCategory) end)
+                        task.wait(SPEED_CONFIG.QuirkRollDelay)
+                    end
                 end
             else
                 task.wait(0.25)
@@ -301,10 +320,8 @@ local function BootMainScript(isVersionSafe)
     -- [ AUTO DROP LOOP (Ball Landed) ]
     -- ------------------------------------------
     task.spawn(function() 
-        task.wait(0.3) -- Startup Delay
         local rep = game:GetService("ReplicatedStorage")
-        local remotes = rep:WaitForChild("Remotes", 9e9)
-        local dropRemote = remotes:WaitForChild("BallLanded", 9e9)
+        local dropRemote = rep:WaitForChild("Remotes", 9e9):WaitForChild("BallLanded", 9e9)
         while _G.DiceSession == currentSession do 
             if _G.AutoDropActive then 
                 pcall(function() dropRemote:FireServer(15) end) 
@@ -337,38 +354,27 @@ local function BootMainScript(isVersionSafe)
     end)
 
     -- ------------------------------------------
-    -- [ AUTO UPGRADES LOOP ]
+    -- [ AUTO UPGRADES LOOP (Dynamic Module Reading) ]
     -- ------------------------------------------
     task.spawn(function()
         local rep = game:GetService("ReplicatedStorage")
         local upRem = rep:WaitForChild("Remotes", 9e9):WaitForChild("Upgrade", 9e9)
-        local Map = {
-            ["CoinUpgrades"] = {ID = "Coins", Stat = "Coins"}, ["PrestigeUpgrades"] = {ID = "PP", Stat = "Prestige Points"},
-            ["AscensionUpgrades"] = {ID = "AP", Stat = "Ascension Points"}, ["StarUpgrades"] = {ID = "Stars", Stat = "Stars"},
-            ["TranscensionUpgrades"] = {ID = "TP", Stat = "Transcension Points"}, ["TimeUpgrades"] = {ID = "Time", Stat = "Time"},
-            ["EnergyUpgrades"] = {ID = "Energy", Stat = "Energy"}, ["CrystalUpgrades"] = {ID = "Crystals", Stat = "Crystals"},
-            ["ClicksUpgrades"] = {ID = "Clicks", Stat = "Clicks"}, ["JadeUpgrades"] = {ID = "Jade", Stat = "Jade"},
-            ["EssenceUpgrades"] = {ID = "Essence", Stat = "Essence"}, ["RarityUpgrades"] = {ID = "Rarities", Stat = "Essence"},
-            ["CrownUpgrades"] = {ID = "Crowns", Stat = "Crowns"},
-            ["CashUpgrades"] = {ID = "Cash", Stat = "Cash"}, ["FlipUpgrades"] = {ID = "Silver", Stat = "Silver"},
-            ["PointUpgrades"] = {ID = "Points", Stat = "Points"}, ["PointsUpgrades"] = {ID = "Points", Stat = "Points"}
-        }
+        local upgradesMod = rep:WaitForChild("Modules", 9e9):WaitForChild("Upgrades", 9e9)
+        
         while _G.DiceSession == currentSession do
             task.wait(0.09) 
             if _G.AutoAllUpgrades and _G.AutoUpgradesList and #_G.AutoUpgradesList > 0 then 
-                local folder = me:FindFirstChild("Data") and me.Data:FindFirstChild("Upgrades")
-                if folder then
-                    for _, u in ipairs(folder:GetChildren()) do
-                        if not _G.AutoAllUpgrades or _G.DiceSession ~= currentSession then break end
-                        if me:FindFirstChild("PlayerGui") and me.PlayerGui:FindFirstChild("Upgrades") then
-                            for guiName, data in pairs(Map) do
-                                if table.find(_G.AutoUpgradesList, data.ID) then
-                                    local guiFolder = me.PlayerGui.Upgrades:FindFirstChild(guiName)
-                                    if guiFolder and guiFolder:FindFirstChild("MainFrame") and guiFolder.MainFrame:FindFirstChild(u.Name) then
-                                        pcall(function() upRem:FireServer(u.Name, "Max", data.ID, data.Stat) end)
-                                        task.wait(0.03) 
-                                    end
-                                end
+                local success, UpgradesData = pcall(function() return require(upgradesMod) end)
+                if success and type(UpgradesData) == "table" then
+                    -- Loop through the currencies the user selected in the dropdown
+                    for _, currencyName in ipairs(_G.AutoUpgradesList) do
+                        local categoryData = UpgradesData[currencyName]
+                        if categoryData then
+                            -- Loop through all available upgrades in this currency category
+                            for upgradeName, _ in pairs(categoryData) do
+                                if not _G.AutoAllUpgrades or _G.DiceSession ~= currentSession then break end
+                                pcall(function() upRem:FireServer(upgradeName, "Max", currencyName, currencyName) end)
+                                task.wait(0.03) 
                             end
                         end
                     end
@@ -575,7 +581,6 @@ end
 -- ==========================================
 local currentVersion = game.PlaceVersion
 
--- If the user sets _G.VersionCheck = false, bypass the warning GUI
 if currentVersion == SAFE_PLACE_VERSION or _G.VersionCheck == false then 
     BootMainScript(currentVersion == SAFE_PLACE_VERSION) 
 else
