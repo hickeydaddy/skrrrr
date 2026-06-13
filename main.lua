@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3497
+local SAFE_PLACE_VERSION = 3504
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -47,7 +47,7 @@ _G.GlyphRollActive = false
 
 -- Utility States
 _G.RuneActive, _G.AutoMasteryActive, _G.AutoAllUpgrades = false, false, false
-_G.AutoClickActive, _G.RarityActive = false, false
+_G.AutoClickActive, _G.AutoDropActive, _G.RarityActive = false, false, false
 _G.AutoUpgradesList = {"Coins"} 
 _G.AutoResetsActive = false
 _G.AutoResetsList = {"Overroll"}
@@ -103,11 +103,12 @@ local function BootMainScript(isVersionSafe)
     -- Adjust your execution speeds here! (All numbers are in seconds)
     ----------------------------------------------------------------------
     local SPEED_CONFIG = {
-        StandardRoll = 0.2,
-        YatzyRoll    = 0.2,
-        CoinFlip     = 0.2,
+        StandardRoll = 0.175,
+        YatzyRoll    = 0.175,
+        CoinFlip     = 0.175,
         GlyphRoll    = 0.02,
         AutoClicker  = 0.025,
+        AutoDrop     = 0.11,
         QuirkCycle   = 0.1
     }
     -- If the measured delta between heartbeats exceeds this threshold, a lag spike
@@ -297,6 +298,24 @@ local function BootMainScript(isVersionSafe)
     end)
 
     -- ------------------------------------------
+    -- [ AUTO DROP LOOP (Ball Landed) ]
+    -- ------------------------------------------
+    task.spawn(function() 
+        task.wait(0.3) -- Startup Delay
+        local rep = game:GetService("ReplicatedStorage")
+        local remotes = rep:WaitForChild("Remotes", 9e9)
+        local dropRemote = remotes:WaitForChild("BallLanded", 9e9)
+        while _G.DiceSession == currentSession do 
+            if _G.AutoDropActive then 
+                pcall(function() dropRemote:FireServer(15) end) 
+                task.wait(SPEED_CONFIG.AutoDrop) 
+            else
+                task.wait(0.1)
+            end
+        end 
+    end)
+
+    -- ------------------------------------------
     -- [ AUTO CLAIM MASTERY LOOP ]
     -- ------------------------------------------
     task.spawn(function() 
@@ -331,7 +350,8 @@ local function BootMainScript(isVersionSafe)
             ["ClicksUpgrades"] = {ID = "Clicks", Stat = "Clicks"}, ["JadeUpgrades"] = {ID = "Jade", Stat = "Jade"},
             ["EssenceUpgrades"] = {ID = "Essence", Stat = "Essence"}, ["RarityUpgrades"] = {ID = "Rarities", Stat = "Essence"},
             ["CrownUpgrades"] = {ID = "Crowns", Stat = "Crowns"},
-            ["CashUpgrades"] = {ID = "Cash", Stat = "Cash"}, ["FlipUpgrades"] = {ID = "Silver", Stat = "Silver"}
+            ["CashUpgrades"] = {ID = "Cash", Stat = "Cash"}, ["FlipUpgrades"] = {ID = "Silver", Stat = "Silver"},
+            ["PointUpgrades"] = {ID = "Points", Stat = "Points"}, ["PointsUpgrades"] = {ID = "Points", Stat = "Points"}
         }
         while _G.DiceSession == currentSession do
             task.wait(0.09) 
