@@ -1,7 +1,7 @@
 -- ==========================================
 -- 1. INITIALIZATION & EXTERNAL MODULE
 -- ==========================================
-local SAFE_PLACE_VERSION = 3497
+local SAFE_PLACE_VERSION = 3504
 local Players = game:GetService("Players")
 local me = Players.LocalPlayer
 local sendRequest = request or http_request or (syn and syn.request)
@@ -25,6 +25,17 @@ else
     pcall(function() if isfile and isfile(logFile) and (currentTime - tonumber(readfile(logFile))) < 1800 then canLog = false end end)
     if canLog then pcall(function() if writefile then writefile(logFile, tostring(currentTime)) end end); task.delay(2, ExternalModule.LogToDiscord, sendRequest, me, isSupported, gameName, "CONNECTED", string.format("Game executed on: %s [supported]", gameName)) end
 end
+
+-- ==========================================
+-- 1.5. PRE-LOAD MAP SEQUENCE
+-- ==========================================
+-- Teleport sequence required to pre-load specific areas so UT and Runes hitboxes exist
+local tpRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9):WaitForChild("Teleport", 9e9)
+task.wait(1.5); pcall(function() tpRemote:FireServer("Area 1") end)
+task.wait(1.5); pcall(function() tpRemote:FireServer("Area 2") end)
+task.wait(1.5); pcall(function() tpRemote:FireServer("Area 3") end)
+task.wait(1.5); pcall(function() tpRemote:FireServer("AT Area 1") end)
+task.wait(1.5); pcall(function() tpRemote:FireServer("AT Area 2") end)
 
 -- ==========================================
 -- 2. GLOBAL STATE (THE "MODEL")
@@ -62,7 +73,7 @@ _G.SelectedRuneName = "Basic"
 _G.SelectedCrate = "Basic Crate"
 _G.CrateAmount = 1
 _G.AutoCrateAmount = 100
-_G.CrateDelay = 0.015
+_G.CrateDelay = 0.01
 _G.SelectedUseItems = {}
 _G.SelectedQuirks = {}
 _G.AutoQuirkRollActive = false
@@ -73,6 +84,19 @@ _G.RemoveEveryFrameActive = false
 -- 3. MAIN SCRIPT BOOTLOADER
 -- ==========================================
 local function BootMainScript(isVersionSafe)
+    
+    -- [ AUTO DELETE CRATE POPUPS ] --
+    task.spawn(function()
+        pcall(function()
+            local playerGui = me:WaitForChild("PlayerGui", 5)
+            local interface = playerGui and playerGui:WaitForChild("Interface", 5)
+            local cratePopups = interface and interface:WaitForChild("CratePopups", 5)
+            if cratePopups then
+                cratePopups:Destroy()
+            end
+        end)
+    end)
+    
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
     local themeFile = folderName .. "/Theme.txt"
     local activeThemeValue, UI_THEMES, selectedDisplayTheme = ExternalModule.GetSafeTheme(themeFile)
@@ -170,8 +194,6 @@ local function BootMainScript(isVersionSafe)
             if _G.FastRollActive then
                 local now = os.clock()
                 local delta = now - lastFastFire
-                -- Lag-spike guard: if the gap is suspiciously large, clamp it so
-                -- the loop fires exactly once on recovery (not a burst of calls).
                 if delta > BURST_GUARD_DELTA then
                     lastFastFire = now - SPEED_CONFIG.StandardRoll
                     delta = SPEED_CONFIG.StandardRoll
@@ -254,7 +276,7 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do
             if _G.AutoCrateActive and _G.SelectedCrate then
                 pcall(function() openCrate:FireServer(_G.SelectedCrate, _G.AutoCrateAmount or 100) end) 
-                task.wait(_G.CrateDelay or 0.015)
+                task.wait(_G.CrateDelay or 0.01)
             else
                 task.wait(0.1)
             end
@@ -587,7 +609,6 @@ end
 -- ==========================================
 local currentVersion = game.PlaceVersion
 
--- If the user sets _G.VersionCheck = false, bypass the warning GUI
 if currentVersion == SAFE_PLACE_VERSION or _G.VersionCheck == false then 
     BootMainScript(currentVersion == SAFE_PLACE_VERSION) 
 else
