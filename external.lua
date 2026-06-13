@@ -49,13 +49,6 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     
     AboutTab:CreateSection("Safety Guidelines")
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
-    
-    AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026 (Hotfix)</b></font>", Content = "• Made Auto Crate amount adjustable per tick (default 100).\n• Removed Suggestions/Bug Reports section and associated webhooks."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026</b></font>", Content = "• Overhauled Auto Quirk Loop to stay on a single category and aggressively spam rolls before switching.\n• Converted Crate Opener into a Loop Toggle with an adjustable delay input.\n• Added Auto Drop (Ball Landed) feature.\n• Fixed Auto Upgrades to dynamically read from the game's new Upgrades module, fixing the Points upgrades."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/11/2026</b></font>", Content = "• Removed Global Throttle so individual remotes can fire at maximum independent speeds.\n• Grouped all execution speeds into a single, easy-to-edit SPEED_CONFIG table."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/28/2026</b></font>", Content = "• Synced Quirk Auto Roll precisely to native game timing.\n• Extreme AFK FPS boost integrated to bypass entire Frame rendering natively.\n• Refactored Item utilities to cleanly house both Items and Crates."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 5/27/2026</b></font>", Content = "• Added Fast Yatsy Auto Roll.\n• Added Fast Auto Coin Flip.\n• Added Auto Quirk (Multi-Dropdown supported)."})
 
     -- [MAIN TAB]
     MainTab:CreateSection("Exploits")
@@ -101,13 +94,13 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     if #useItemList == 0 then table.insert(useItemList, "None") end
     
     _G.SelectedCrate = crateList[1]
-    _G.CrateDelay = 0.015
+    _G.CrateDelay = 0.01
     _G.AutoCrateAmount = 100
     _G.SelectedUseItems = {useItemList[1]}
     
     MainTab:CreateDropdown({Name = "Select Crate Type", Options = crateList, CurrentOption = {crateList[1]}, MultipleOptions = false, Callback = function(O) if O and O[1] then _G.SelectedCrate = O[1] end end})
     MainTab:CreateInput({Name = "Auto Crate Amount", PlaceholderText = "Amount per tick (Default 100)", RemoveTextAfterFocusLost = false, Callback = function(T) local num = tonumber(T); if num and num > 0 then _G.AutoCrateAmount = math.floor(num) end end})
-    MainTab:CreateInput({Name = "Auto Crate Delay (Seconds)", PlaceholderText = "Min: 0.015", RemoveTextAfterFocusLost = false, Callback = function(T) local num = tonumber(T); if num and num >= 0.015 then _G.CrateDelay = num end end})
+    MainTab:CreateInput({Name = "Auto Crate Delay (Seconds)", PlaceholderText = "Min: 0.01", RemoveTextAfterFocusLost = false, Callback = function(T) local num = tonumber(T); if num and num >= 0.01 then _G.CrateDelay = num end end})
     local Toggle_AutoCrate = MainTab:CreateToggle({Name = "Auto Open Crate", CurrentValue = false, Callback = function(V) _G.AutoCrateActive = V end})
     
     local Dropdown_UseItems = MainTab:CreateDropdown({Name = "Select Item(s) to Use Max", Options = useItemList, CurrentOption = _G.SelectedUseItems, MultipleOptions = true, Callback = function(O) _G.SelectedUseItems = O end})
