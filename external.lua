@@ -49,13 +49,6 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
     
     AboutTab:CreateSection("Safety Guidelines")
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
-    
-    AboutTab:CreateSection("Update Logs")
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026 (Hotfix 3)</b></font>", Content = "• Fixed Crate Opener Configuration bug. Crate Type, Crate Amount, and Crate Delay are now properly saved to and loaded from your config files."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026 (Hotfix 2)</b></font>", Content = "• Integrated a forced Map Pre-loading sequence before script boot to guarantee UT and Rune features work perfectly.\n• Decreased Auto Crate delay floor to 0.01 seconds."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026 (Hotfix 1)</b></font>", Content = "• Made Auto Crate amount adjustable per tick (default 100).\n• Removed Suggestions/Bug Reports section and associated webhooks."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026</b></font>", Content = "• Overhauled Auto Quirk Loop to stay on a single category and aggressively spam rolls before switching.\n• Converted Crate Opener into a Loop Toggle with an adjustable delay input.\n• Added Auto Drop (Ball Landed) feature.\n• Fixed Auto Upgrades to dynamically read from the game's new Upgrades module, fixing the Points upgrades."})
-    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/11/2026</b></font>", Content = "• Removed Global Throttle so individual remotes can fire at maximum independent speeds.\n• Grouped all execution speeds into a single, easy-to-edit SPEED_CONFIG table."})
 
     -- [MAIN TAB]
     MainTab:CreateSection("Exploits")
@@ -161,7 +154,7 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
 
     MainTab:CreateSection("Upgrades & Achievements")
     local Toggle_AllUpgrades = MainTab:CreateToggle({Name = "Enable Auto Upgrades", CurrentValue = false, Callback = function(V) _G.AutoAllUpgrades = V end})
-    local Dropdown_Upgrades = MainTab:CreateDropdown({Name = "Select Currencies to Auto-Upgrade", Options = {"Coins", "PP", "AP", "Stars", "TP", "Time", "Energy", "Crystals", "Clicks", "Jade", "Essence", "Rarities", "Crowns", "Cash", "Silver", "Points"}, CurrentOption = {"Coins"}, MultipleOptions = true, Callback = function(O) _G.AutoUpgradesList = O end})
+    local Dropdown_Upgrades = MainTab:CreateDropdown({Name = "Select Currencies to Auto-Upgrade", Options = {"Coins", "PP", "AP", "Stars", "TP", "Time", "Energy", "Crystals", "Clicks", "Jade", "Essence", "Rarities", "Crowns", "Cash", "Silver", "Points", "SP"}, CurrentOption = {"Coins"}, MultipleOptions = true, Callback = function(O) _G.AutoUpgradesList = O end})
     local Toggle_UT = MainTab:CreateToggle({Name = "Auto Upgrade Tree", CurrentValue = false, Callback = function(V) _G.AutoUT = V end})
     local Toggle_Mastery = MainTab:CreateToggle({Name = "Auto Claim Mastery", CurrentValue = false, Callback = function(V) _G.AutoMasteryActive = V end})
 
