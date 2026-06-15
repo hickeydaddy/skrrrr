@@ -152,11 +152,34 @@ local function BootMainScript(isVersionSafe)
         while _G.DiceSession == currentSession do
             if _G.DisableRollingFrameActive or _G.RemoveEveryFrameActive then
                 local player = game:GetService("Players").LocalPlayer
-                
                 local playerScripts = player:FindFirstChild("PlayerScripts")
-                local rollingScript = playerScripts and playerScripts:FindFirstChild("Rolling")
-                if rollingScript and rollingScript.Disabled then
-                    rollingScript.Disabled = false 
+                
+                -- Anti-Lag Fix: Brutally set disabled to TRUE to freeze the native memory leak scripts
+                if playerScripts then
+                    local laggyScripts = {"Rolling", "YatzyRolling", "CoinFlipping", "Quirks", "Glyphs", "Crates"}
+                    for _, name in ipairs(laggyScripts) do
+                        local s = playerScripts:FindFirstChild(name)
+                        if s and s:IsA("LocalScript") and not s.Disabled then
+                            s.Disabled = true
+                        end
+                    end
+                end
+                
+                -- Anti-Lag Fix: Brutally murder the remote connections so they literally cannot fire
+                if getconnections then
+                    pcall(function()
+                        local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+                        if remotes then
+                            for _, rName in ipairs({"Roll", "YatzyRoll", "CoinFlip", "RollGlyph", "RollQuirk", "OpenCrate"}) do
+                                local r = remotes:FindFirstChild(rName)
+                                if r and r:IsA("RemoteEvent") then
+                                    for _, c in ipairs(getconnections(r.OnClientEvent)) do
+                                        c:Disable()
+                                    end
+                                end
+                            end
+                        end
+                    end)
                 end
                 
                 local playerGui = player:FindFirstChild("PlayerGui")
