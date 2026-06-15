@@ -389,19 +389,28 @@ local function BootMainScript(isVersionSafe)
         local upRem = rep:WaitForChild("Remotes", 9e9):WaitForChild("Upgrade", 9e9)
         local upgradesMod = rep:WaitForChild("Modules", 9e9):WaitForChild("Upgrades", 9e9)
         
+        -- The remote requires the Short Name (Arg 3) AND the Full Stat Name (Arg 4). 
+        local FullStatNames = {
+            ["Coins"] = "Coins", ["PP"] = "Prestige Points", ["AP"] = "Ascension Points",
+            ["Stars"] = "Stars", ["TP"] = "Transcension Points", ["Time"] = "Time",
+            ["Energy"] = "Energy", ["Crystals"] = "Crystals", ["Clicks"] = "Clicks",
+            ["Jade"] = "Jade", ["Essence"] = "Essence", ["Rarities"] = "Rarities",
+            ["Crowns"] = "Crowns", ["Cash"] = "Cash", ["Silver"] = "Silver",
+            ["Points"] = "Points", ["SP"] = "SP"
+        }
+
         while _G.DiceSession == currentSession do
             task.wait(0.09) 
             if _G.AutoAllUpgrades and _G.AutoUpgradesList and #_G.AutoUpgradesList > 0 then 
                 local success, UpgradesData = pcall(function() return require(upgradesMod) end)
                 if success and type(UpgradesData) == "table" then
-                    -- Loop through the currencies the user selected in the dropdown
                     for _, currencyName in ipairs(_G.AutoUpgradesList) do
                         local categoryData = UpgradesData[currencyName]
                         if categoryData then
-                            -- Loop through all available upgrades in this currency category
+                            local fullStatName = FullStatNames[currencyName] or currencyName
                             for upgradeName, _ in pairs(categoryData) do
                                 if not _G.AutoAllUpgrades or _G.DiceSession ~= currentSession then break end
-                                pcall(function() upRem:FireServer(upgradeName, "Max", currencyName, currencyName) end)
+                                pcall(function() upRem:FireServer(upgradeName, "Max", currencyName, fullStatName) end)
                                 task.wait(0.03) 
                             end
                         end
