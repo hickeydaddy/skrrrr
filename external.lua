@@ -45,10 +45,16 @@ function Module.BuildAllUI(Rayfield, Window, me, folderName, sendRequest, isVers
 
     -- [ABOUT TAB]
     AboutTab:CreateSection("Script Information")
-    AboutTab:CreateParagraph({Title = "Status", Content = isVersionSafe and "Game version matched (" .. tostring(SAFE_PLACE_VERSION) .. ")! Script is safe to use and everything is working fine!" or "⚠️ Warning: Running on an unverified game version (" .. tostring(currentVersion) .. "). Script was last updated for version " .. tostring(SAFE_PLACE_VERSION) .. ". Use at your own risk!"})
+    AboutTab:CreateParagraph({Title = "Status", Content = isVersionSafe and "Game version matched (" .. tostring(SAFE_PLACE_VERSION) .. ")! Script is safe to use and everything is working fine!" or "⚠️ Warning: Running on an unverified game version (" .. tostring(currentVersion) .. "). Script was last updated for version " .. tostring(SAFE_PLACE_VERSION) .. ". Use at your risk!"})
     
     AboutTab:CreateSection("Safety Guidelines")
     AboutTab:CreateParagraph({Title = "⚠️ Private Server Recommended", Content = "Please use this script in a private server only. Make sure your private server only has you or a very trusted friend in it. Do not put random people in your server to avoid being reported/ being tracked by developers."})
+    
+    AboutTab:CreateSection("Update Logs")
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/15/2026 (Anti-Lag Nuke)</b></font>", Content = "• Completely rebuilt the AFK Frame Disabler. It now severs network event connections and aggressively disables native game scripts to drastically reduce RAM/CPU leaks from fast-rolling."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026 (Hotfix)</b></font>", Content = "• Fixed Crate Opener Configuration bug. Crate Type, Amount, and Delay now properly save/load.\n• Added Map Pre-loading sequence to ensure UT/Rune features work instantly."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/13/2026</b></font>", Content = "• Overhauled Auto Quirk Loop to stay on a single category and aggressively spam rolls before switching.\n• Converted Crate Opener into a Loop Toggle with an adjustable delay input.\n• Added Auto Drop (Ball Landed) feature.\n• Fixed Auto Upgrades to dynamically read from the game's new Upgrades module."})
+    AboutTab:CreateParagraph({Title = "<font size=\"16\"><b>[*] Update: 6/11/2026</b></font>", Content = "• Removed Global Throttle so individual remotes can fire at maximum independent speeds.\n• Grouped all execution speeds into a single, easy-to-edit SPEED_CONFIG table."})
 
     -- [MAIN TAB]
     MainTab:CreateSection("Exploits")
